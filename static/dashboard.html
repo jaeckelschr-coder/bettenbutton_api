@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Betten-Button Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f6f7f8;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #333;
+        }
+
+        #device-list {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .device {
+            background: #fff;
+            padding: 15px 18px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info {
+            max-width: 70%;
+        }
+
+        .info b {
+            font-size: 18px;
+        }
+
+        .status-indicator {
+            display: flex;
+            gap: 8px;
+        }
+
+        .led {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ccc;
+            border: 1px solid #888;
+        }
+
+        .led.red.on { background: #e74c3c; }
+        .led.green.on { background: #2ecc71; }
+
+        .updated {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🏨 Betten-Button Dashboard</h1>
+
+    <div id="device-list">Lade Geräte...</div>
+
+    <script>
+        async function loadAndRender() {
+            try {
+                const res = await fetch("/devices");
+                if (!res.ok) {
+                    throw new Error("HTTP " + res.status);
+                }
+                const devices = await res.json();
+
+                // Sortierung: freie Betriebe (1 und 2) zuerst, dann rote (0)
+                devices.sort((a, b) => b.status - a.status);
+
+                const container = document.getElementById("device-list");
+                container.innerHTML = "";
+
+                devices.forEach(dev => {
+                    const div = document.createElement("div");
+                    div.className = "device";
+
+                    // LED-Zustände bestimmen
+                    const redOn = dev.status === 0;
+                    const g1On = dev.status === 1 || dev.status === 2;
+                    const g2On = dev.status === 2;
+
+                    const lastUpdate = dev.lastUpdate
+                        ? new Date(dev.lastUpdate).toLocaleString("de-DE")
+                        : "unbekannt";
+
+                    div.innerHTML = `
+                        <div class="info">
+                            <b>${dev.name}</b><br>
+                            Tel: ${dev.phone || "–"}<br>
+                            Mail: ${dev.email || "–"}
+                            <div class="updated">Aktualisiert: ${lastUpdate}</div>
+                        </div>
+
+                        <div class="status-indicator">
+                            <div class="led red ${redOn ? "on" : ""}"></div>
+                            <div class="led green ${g1On ? "on" : ""}"></div>
+                            <div class="led green ${g2On ? "on" : ""}"></div>
+                        </div>
+                    `;
+
+                    container.appendChild(div);
+                });
+
+            } catch (err) {
+                console.error("Fehler beim Laden:", err);
+                document.getElementById("device-list").innerHTML =
+                    "<b>Fehler beim Laden der Daten.</b>";
+            }
+        }
+
+        // Initialer Load
+        loadAndRender();
+
+        // Alle 10 Sekunden aktualisieren
+        setInterval(loadAndRender, 10000);
+    </script>
+</body>
+</html>

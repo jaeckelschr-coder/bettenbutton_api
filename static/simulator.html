@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Betten-Button Simulator</title>
+
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 1.5rem;
+      background: #f5f5f7;
+      color: #222;
+    }
+
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+      padding: 1.5rem 1.75rem 2rem;
+    }
+
+    header {
+      margin-bottom: 1.25rem;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin: 0 0 0.25rem 0;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .hint {
+      font-size: 0.8rem;
+      color: #777;
+      margin-top: 0.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      padding: 0.55rem 0.4rem;
+      text-align: left;
+    }
+
+    thead {
+      border-bottom: 1px solid #ddd;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #fafafa;
+    }
+
+    .device-name {
+      font-weight: 600;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 0.25rem 0.7rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #e0e0e0;
+    }
+
+    button span.dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      display: inline-block;
+      background: #999;
+    }
+
+    button.btn-red {
+      background: #ffebee;
+      color: #b71c1c;
+    }
+    button.btn-red span.dot {
+      background: #e53935;
+    }
+
+    button.btn-today {
+      background: #f1f8e9;
+      color: #33691e;
+    }
+    button.btn-today span.dot {
+      background: #43a047;
+    }
+
+    button.btn-multi {
+      background: #e8f5e9;
+      color: #1b5e20;
+    }
+    button.btn-multi span.dot {
+      background: #2e7d32;
+      box-shadow: 4px 0 0 0 #81c784; /* zweite „virtuelle“ grüne LED */
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .status-msg {
+      font-size: 0.75rem;
+      color: #666;
+    }
+    .status-msg.ok {
+      color: #2e7d32;
+    }
+    .status-msg.error {
+      color: #c62828;
+    }
+
+    .meta {
+      font-size: 0.8rem;
+      color: #777;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>Betten-Button Simulator</h1>
+    <div class="subtitle">
+      Simulation der Hardware-Buttons &ndash; sendet Statusänderungen an die Betten-Button API.
+    </div>
+    <div class="hint">
+      Tipp: Dashboard und Simulator nebeneinander öffnen. Im Simulator klicken, im Dashboard die Änderungen beobachten.
+    </div>
+  </header>
+
+  <div class="meta" id="metaInfo">Lade Geräte...</div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Betrieb</th>
+        <th>Geräte-ID</th>
+        <th>Aktionen</th>
+        <th>Rückmeldung</th>
+      </tr>
+    </thead>
+    <tbody id="simulatorBody">
+      <!-- JS füllt hier die Zeilen -->
+    </tbody>
+  </table>
+</div>
+
+<script>
+  async function loadDevices() {
+    const meta = document.getElementById("metaInfo");
+    const tbody = document.getElementById("simulatorBody");
+    meta.textContent = "Lade Geräte...";
+    tbody.innerHTML = "";
+
+    try {
+      const res = await fetch("/devices");
+      if (!res.ok) {
+        throw new Error("HTTP " + res.status);
+      }
+      const devices = await res.json();
+
+      if (!Array.isArray(devices) || devices.length === 0) {
+        meta.textContent = "Keine Geräte gefunden.";
+        return;
+      }
+
+      devices.forEach(dev => {
+        const tr = document.createElement("tr");
+
+        const tdName = document.createElement("td");
+        tdName.className = "device-name";
+        tdName.textContent = dev.name || dev.id;
+
+        const tdId = document.createElement("td");
+        tdId.textContent = dev.id;
+
+        const tdButtons = document.createElement("td");
+        const tdStatus = document.createElement("td");
+
+        const btnGroup = document.createElement("div");
+        btnGroup.className = "btn-group";
+
+        const statusMsg = document.createElement("div");
+        statusMsg.className = "status-msg";
+        statusMsg.textContent = "–";
+        tdStatus.appendChild(statusMsg);
+
+        function setLoading(isLoading) {
+          [btnRed, btnToday, btnMulti].forEach(b => b.disabled = isLoading);
+        }
+
+        function sendStatus(status, label) {
+          setLoading(true);
+          statusMsg.className = "status-msg";
+          statusMsg.textContent = "Sende " + label + "…";
+
+          fetch(`/devices/${encodeURIComponent(dev.id)}/status`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              status: status,
+              source: "simulator"
+            })
+          })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error("HTTP " + response.status);
+              }
+              return response.json();
+            })
+            .then(data => {
+              statusMsg.className = "status-msg ok";
+              const ts = data.lastUpdate ? new Date(data.lastUpdate) : new Date();
+              const t = ts.toLocaleTimeString("de-DE", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit"
+              });
+              statusMsg.textContent = `OK (${label}, ${t})`;
+            })
+            .catch(err => {
+              console.error(err);
+              statusMsg.className = "status-msg error";
+              statusMsg.textContent = "Fehler: " + err.message;
+            })
+            .finally(() => {
+              setLoading(false);
+            });
+        }
+
+        const btnRed = document.createElement("button");
+        btnRed.className = "btn-red";
+        btnRed.innerHTML = `<span class="dot"></span><span>Keine Verfügbarkeit</span>`;
+        btnRed.addEventListener("click", () => sendStatus(0, "keine Verfügbarkeit"));
+
+        const btnToday = document.createElement("button");
+        btnToday.className = "btn-today";
+        btnToday.innerHTML = `<span class="dot"></span><span>Verfügbarkeit heute</span>`;
+        btnToday.addEventListener("click", () => sendStatus(1, "Verfügbarkeit heute"));
+
+        const btnMulti = document.createElement("button");
+        btnMulti.className = "btn-multi";
+        btnMulti.innerHTML = `<span class="dot"></span><span>Verfügbarkeit mehrere Tage</span>`;
+        btnMulti.addEventListener("click", () => sendStatus(2, "Verfügbarkeit mehrere Tage"));
+
+        btnGroup.appendChild(btnRed);
+        btnGroup.appendChild(btnToday);
+        btnGroup.appendChild(btnMulti);
+
+        tdButtons.appendChild(btnGroup);
+
+        tr.appendChild(tdName);
+        tr.appendChild(tdId);
+        tr.appendChild(tdButtons);
+        tr.appendChild(tdStatus);
+
+        tbody.appendChild(tr);
+      });
+
+      meta.textContent = `Geräte geladen: ${devices.length}`;
+    } catch (err) {
+      console.error(err);
+      meta.textContent = "Fehler beim Laden der Geräte: " + err.message;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", loadDevices);
+</script>
+</body>
+</html>
