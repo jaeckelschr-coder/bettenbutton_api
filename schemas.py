@@ -1,27 +1,39 @@
 from datetime import datetime
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional
 
 
-# ----------- Status/Historie -----------
+# =========================
+# Status / Historie
+# =========================
 
-class StatusEventBase(BaseModel):
+class StatusEventCreate(BaseModel):
     status: int = Field(..., ge=0, le=2)
     source: Optional[str] = "button"
 
 
-class StatusEventCreate(StatusEventBase):
-    pass
-
-
-class StatusEventRead(StatusEventBase):
+class StatusEventRead(BaseModel):
+    id: int
+    device_id: str
+    status: int = Field(..., ge=0, le=2)
+    source: Optional[str] = "button"
     timestamp: datetime
 
     class Config:
         orm_mode = True
 
 
-# ----------- Device -----------
+class PressResponse(BaseModel):
+    device_id: str
+    status: int = Field(..., ge=0, le=2)
+    lastUpdate: datetime
+    timestamp: datetime
+    source: str
+
+
+# =========================
+# Device
+# =========================
 
 class DeviceBase(BaseModel):
     id: str
@@ -32,21 +44,22 @@ class DeviceBase(BaseModel):
 
 
 class DeviceCreate(DeviceBase):
-    pass
+    device_key: str
 
 
 class DeviceRead(DeviceBase):
-    current_status: int
+    current_status: int = Field(..., ge=0, le=2)
     last_update: Optional[datetime] = None
 
     class Config:
         orm_mode = True
 
 
-class DeviceDetail(DeviceRead):
-    # mit letztem Event (optional)
-    last_event: Optional[StatusEventRead] = None
+class DeviceDashboardRead(DeviceBase):
+    current_status: int = Field(..., ge=0, le=2)
+    last_update: Optional[datetime] = None
+    status: int = Field(..., ge=0, le=2)
+    lastUpdate: Optional[datetime] = None
 
-
-class DeviceListResponse(BaseModel):
-    devices: List[DeviceRead]
+    class Config:
+        orm_mode = True

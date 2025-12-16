@@ -1,6 +1,6 @@
-fastapi
-uvicorn[standard]
-sqlalchemy
-pydantic
-python-multipart
-httpx
+fastapi==0.103.2
+uvicorn[standard]==0.23.2
+sqlalchemy==2.0.23
+pydantic==1.10.13
+python-multipart==0.0.6
+httpx==0.25.1

@@ -1,152 +1,210 @@
-from fastapi import FastAPI, HTTPException
+# ================================================================
+# Bettenbutton – main.py (Swagger/Schemas wieder sauber)
+# ================================================================
+
+from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime, timezone
+from fastapi.responses import HTMLResponse
+from typing import Optional, List
+from datetime import datetime
 import os
 
-# ============================================================
-# FastAPI-App Grundkonfiguration
-# ============================================================
+from database import Base, engine, SessionLocal
+import models
+import schemas
 
-app = FastAPI(title="Betten-Button API", version="0.1.0")
+print("### MAIN.PY LOADED – SCHEMAS + SWAGGER CLEAN ###")
 
-# CORS – für den Anfang offen, später auf konkrete Domains einschränken
+# ================================================================
+# INITIAL SETUP
+# ================================================================
+
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="Bettenbutton API", version="1.0.0")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],      # z.B. ["https://bettenbutton.schiltach.de"]
-    allow_credentials=True,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Basis- und Static-Pfade
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
-
-# Static-Files mounten (falls du später CSS/JS/Image-Dateien trennst)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-# ============================================================
-# In-Memory Datenmodell für Geräte
-# ============================================================
 
-DEVICES = [
-    {
-        "id": "BB-001",
-        "name": "FeWo Flößerblick",
-        "phone": "+49 7836 123456",
-        "email": "info@floesserblick.de",
-        "status": 2,
-        "lastUpdate": "2025-12-08T10:20:00Z",
-        "source": "button"
-    },
-    {
-        "id": "BB-002",
-        "name": "Hotel zum Bären",
-        "phone": "+49 7836 987654",
-        "email": "info@hotel-baeren.de",
-        "status": 0,
-        "lastUpdate": "2025-12-08T09:50:00Z",
-        "source": "daily_reset"
-    },
-    {
-        "id": "BB-003",
-        "name": "Berghütte Tannenblick",
-        "phone": "+49 7422 555222",
-        "email": "info@tannenblick.de",
-        "status": 1,
-        "lastUpdate": "2025-12-08T08:30:00Z",
-        "source": "button"
-    },
-    {
-        "id": "BB-004",
-        "name": "Pension Waldecke",
-        "phone": "+49 7836 223344",
-        "email": "kontakt@waldecke.de",
-        "status": 0,
-        "lastUpdate": "2025-12-07T17:10:00Z",
-        "source": "daily_reset"
-    },
-    {
-        "id": "BB-005",
-        "name": "Gästehaus am Markt",
-        "phone": "+49 7836 445566",
-        "email": "anfrage@gaestehaus-am-markt.de",
-        "status": 2,
-        "lastUpdate": "2025-12-08T11:05:00Z",
-        "source": "button"
-    }
-]
+# ================================================================
+# DB SESSION
+# ================================================================
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
-class StatusUpdate(BaseModel):
-    status: int                 # 0 = rot, 1 = heute, 2 = mehrere Tage
-    source: Optional[str] = "button"
+# ================================================================
+# SECURITY (PROTOTYP)
+# ================================================================
+
+ADMIN_KEY = "supersecret_admin_key_123"
+
+def require_admin_key(x_admin_key: Optional[str]):
+    if not x_admin_key or x_admin_key != ADMIN_KEY:
+        raise HTTPException(status_code=401, detail="Invalid admin key")
+
+def require_device_key(db, device_id: str, x_device_key: Optional[str]):
+    if not x_device_key:
+        raise HTTPException(status_code=401, detail="Missing X-Device-Key")
+    dev = db.query(models.Device).get(device_id)
+    if not dev:
+        raise HTTPException(status_code=404, detail="Device not found")
+    if dev.device_key != x_device_key:
+        raise HTTPException(status_code=403, detail="Invalid device key")
+    return dev
 
 
-def get_device(device_id: str) -> Optional[dict]:
-    for dev in DEVICES:
-        if dev["id"] == device_id:
-            return dev
-    return None
+# ================================================================
+# HELPER
+# ================================================================
 
-# ============================================================
-# Frontend-Routen: Dashboard & Simulator
-# ============================================================
-
-@app.get("/", include_in_schema=False)
-def serve_dashboard():
-    """
-    Liefert das Dashboard (Root-URL).
-    Erwartet: static/dashboard.html
-    """
-    dashboard_path = os.path.join(STATIC_DIR, "dashboard.html")
-    if not os.path.exists(dashboard_path):
-        # Fallback, falls Datei fehlt
-        raise HTTPException(status_code=404, detail="dashboard.html nicht gefunden")
-    return FileResponse(dashboard_path)
+def next_status(current: int) -> int:
+    # verbindliche Betten-Button-Logik:
+    # 0 (rot) -> 1 (heute) -> 2 (mehrere Tage) -> 0
+    return (int(current) + 1) % 3
 
 
-@app.get("/simulator", include_in_schema=False)
-def serve_simulator():
-    """
-    Liefert den Button-Simulator.
-    Erwartet: static/simulator.html
-    """
-    sim_path = os.path.join(STATIC_DIR, "simulator.html")
-    if not os.path.exists(sim_path):
-        raise HTTPException(status_code=404, detail="simulator.html nicht gefunden")
-    return FileResponse(sim_path)
-
-# ============================================================
-# API-Routen für Geräte & Status
-# ============================================================
-
-@app.get("/devices")
-def list_devices():
-    """
-    Liefert die komplette Liste der Geräte (für das Dashboard).
-    """
-    return DEVICES
+def to_dashboard_device(d: models.Device) -> schemas.DeviceDashboardRead:
+    # Wir bauen explizit das Dashboard-kompatible Objekt inkl. Dopplung der Felder
+    return schemas.DeviceDashboardRead(
+        id=d.id,
+        name=d.name,
+        phone=d.phone,
+        email=d.email,
+        location=d.location,
+        current_status=d.current_status,
+        last_update=d.last_update,
+        status=d.current_status,
+        lastUpdate=d.last_update
+    )
 
 
-@app.post("/devices/{device_id}/status")
-def update_status(device_id: str, payload: StatusUpdate):
-    """
-    Aktualisiert den Status eines Gerätes (z. B. durch Button oder Simulator).
-    """
-    dev = get_device(device_id)
-    if dev is None:
+# ================================================================
+# FRONTEND ROOT
+# ================================================================
+
+@app.get("/", include_in_schema=False, response_class=HTMLResponse)
+def root():
+    return HTMLResponse("<h1>Bettenbutton Backend läuft</h1>")
+
+
+# ================================================================
+# DEVICES
+# ================================================================
+
+@app.post("/devices", response_model=schemas.DeviceRead)
+def create_device(payload: schemas.DeviceCreate, db=Depends(get_db)):
+    # id ist String (z.B. "BB-001") – bleibt so wie im Modell
+    existing = db.query(models.Device).get(payload.id)
+    if existing:
+        raise HTTPException(status_code=409, detail="Device ID already exists")
+
+    dev = models.Device(
+        id=payload.id,
+        name=payload.name,
+        phone=payload.phone,
+        email=payload.email,
+        location=payload.location,
+        device_key=payload.device_key,
+        current_status=0,
+        last_update=None,
+    )
+    db.add(dev)
+    db.commit()
+    db.refresh(dev)
+    return dev
+
+
+@app.get("/devices", response_model=List[schemas.DeviceDashboardRead])
+def list_devices(db=Depends(get_db)):
+    devices = db.query(models.Device).all()
+    return [to_dashboard_device(d) for d in devices]
+
+
+# ================================================================
+# BUTTON PRESS (SYSTEMKERN)
+# ================================================================
+
+@app.post("/devices/{device_id}/press", response_model=schemas.PressResponse)
+def press_device(
+    device_id: str,
+    x_device_key: Optional[str] = Header(default=None),
+    db=Depends(get_db),
+):
+    dev = require_device_key(db, device_id, x_device_key)
+
+    new_status = next_status(dev.current_status)
+    now = datetime.utcnow()
+
+    event = models.StatusEvent(
+        device_id=device_id,
+        status=new_status,
+        source="button",
+        timestamp=now,
+    )
+    db.add(event)
+
+    dev.current_status = new_status
+    dev.last_update = now
+
+    db.commit()
+    db.refresh(event)
+
+    return schemas.PressResponse(
+        device_id=device_id,
+        status=new_status,
+        lastUpdate=now,
+        timestamp=event.timestamp,
+        source=event.source or "button",
+    )
+
+
+# ================================================================
+# STATUS OVERRIDE (ADMIN / SIMULATOR)
+# ================================================================
+
+@app.post("/devices/{device_id}/status", response_model=schemas.StatusEventRead)
+def set_device_status(
+    device_id: str,
+    payload: schemas.StatusEventCreate,
+    x_admin_key: Optional[str] = Header(default=None),
+    db=Depends(get_db),
+):
+    require_admin_key(x_admin_key)
+
+    dev = db.query(models.Device).get(device_id)
+    if not dev:
         raise HTTPException(status_code=404, detail="Device not found")
 
-    if payload.status not in (0, 1, 2):
-        raise HTTPException(status_code=400, detail="Invalid status (must be 0, 1 or 2)")
+    now = datetime.utcnow()
 
-    dev["status"] = payload.status
-    dev["source"] = payload.source or "button"
-    dev["lastUpdate"] = datetime.now(timezone.utc).isoformat()
+    event = models.StatusEvent(
+        device_id=device_id,
+        status=payload.status,
+        source=payload.source or "admin",
+        timestamp=now,
+    )
+    db.add(event)
 
-    return dev
+    dev.current_status = payload.status
+    dev.last_update = now
+
+    db.commit()
+    db.refresh(event)
+
+    return event
