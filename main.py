@@ -138,6 +138,10 @@ def list_devices(db=Depends(get_db)):
     devices = db.query(models.Device).all()
     return [to_dashboard_device(d) for d in devices]
 
+@app.get("/api/version")
+def get_version():
+    return {"name": APP_NAME, "version": APP_VERSION, "status": "ok"}
+
 
 # ================================================================
 # BUTTON PRESS (SYSTEMKERN)
