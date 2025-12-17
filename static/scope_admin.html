@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Betten-Button – Regionenverwaltung</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        h1 { margin-bottom: 0.2rem; }
+        .subtitle { color: #555; margin-bottom: 1rem; }
+        .toolbar { margin-bottom: 1rem; }
+        select { padding: 4px 8px; }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px 10px;
+        }
+        th {
+            background: #eee;
+        }
+        button {
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid #888;
+            cursor: pointer;
+            margin-right: 4px;
+        }
+        button.include { background: #ddffdd; }
+        button.exclude { background: #ffe7b3; }
+        button.delete { background: #ffdddd; }
+        .status { margin-bottom: 10px; font-size: 0.9rem; }
+        .badge {
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            display: inline-block;
+        }
+        .badge-none { background: #eee; }
+        .badge-include { background: #c8f7c5; }
+        .badge-exclude { background: #f9e79f; }
+    </style>
+</head>
+<body>
+
+<h1>Betten-Button – Regionenverwaltung</h1>
+<div class="subtitle" id="subtitle">Client: –</div>
+
+<div class="toolbar">
+    <label for="client-select">Touristinfo / Client auswählen: </label>
+    <select id="client-select"></select>
+</div>
+
+<div class="status" id="status"></div>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Typ</th>
+        <th>Scope-Status</th>
+        <th>Aktion</th>
+    </tr>
+    </thead>
+    <tbody id="region-body"></tbody>
+</table>
+
+<script>
+    let CURRENT_CLIENT_ID = null;
+    let clients = [];
+    let regions = [];
+
+    async function loadClientsAndRegions() {
+        const status = document.getElementById("status");
+        const select = document.getElementById("client-select");
+        const subtitle = document.getElementById("subtitle");
+
+        status.textContent = "Lade Clients & Regionen...";
+        select.innerHTML = "";
+
+        try {
+            const [clientRes, regionRes] = await Promise.all([
+                fetch("/clients"),
+                fetch("/regions")
+            ]);
+
+            if (!clientRes.ok || !regionRes.ok) {
+                status.textContent = `Fehler: /clients=${clientRes.status}, /regions=${regionRes.status}`;
+                return;
+            }
+
+            const clientData = await clientRes.json();
+            const regionData = await regionRes.json();
+
+            console.log("Clients:", clientData);
+            console.log("Regions:", regionData);
+
+            clients = Array.isArray(clientData) ? clientData : [];
+            regions = Array.isArray(regionData) ? regionData : [];
+
+            status.textContent = `Geladen: ${clients.length} Clients, ${regions.length} Regionen`;
+
+            if (clients.length === 0) {
+                subtitle.textContent = "Client: –";
+                return;
+            }
+            if (regions.length === 0) {
+                return;
+            }
+
+            clients.forEach(c => {
+                const opt = document.createElement("option");
+                opt.value = c.id;
+                opt.textContent = c.name;
+                select.appendChild(opt);
+            });
+
+            CURRENT_CLIENT_ID = clients[0].id;
+            updateSubtitle();
+
+            select.value = CURRENT_CLIENT_ID;
+            select.onchange = () => {
+                CURRENT_CLIENT_ID = Number(select.value);
+                updateSubtitle();
+                loadScopes();
+            };
+
+            await loadScopes();
+
+        } catch (err) {
+            console.error(err);
+            status.textContent = "Fehler beim Laden (Details in der Konsole).";
+        }
+    }
+
+    function updateSubtitle() {
+        const subtitle = document.getElementById("subtitle");
+        const client = clients.find(c => c.id === CURRENT_CLIENT_ID);
+        subtitle.textContent = client
+            ? `Client: ${client.name} (ID ${client.id})`
+            : "Client: –";
+    }
+
+    async function loadScopes() {
+        const status = document.getElementById("status");
+        const tbody = document.getElementById("region-body");
+
+        if (!CURRENT_CLIENT_ID) {
+            status.textContent = "Kein Client ausgewählt.";
+            return;
+        }
+
+        status.textContent = "Lade Scopes...";
+        tbody.innerHTML = "";
+
+        try {
+            const res = await fetch(`/clients/${CURRENT_CLIENT_ID}/regions`);
+            if (!res.ok) {
+                status.textContent = `Fehler beim Laden der Scopes: ${res.status}`;
+                return;
+            }
+
+            const scopes = await res.json();
+            console.log("Scopes:", scopes);
+
+            const scopeMap = new Map();
+            if (Array.isArray(scopes)) {
+                scopes.forEach(s => {
+                    scopeMap.set(s.region_id, s.scope_type);
+                });
+            }
+
+            regions.forEach(r => {
+                const tr = document.createElement("tr");
+
+                const tdId = document.createElement("td");
+                tdId.textContent = r.id;
+
+                const tdName = document.createElement("td");
+                tdName.textContent = r.name;
+
+                const tdType = document.createElement("td");
+                tdType.textContent = r.type;
+
+                const tdScope = document.createElement("td");
+                const type = scopeMap.get(r.id) || "none";
+                const badge = document.createElement("span");
+                badge.classList.add("badge");
+                if (type === "include") {
+                    badge.textContent = "include";
+                    badge.classList.add("badge-include");
+                } else if (type === "exclude") {
+                    badge.textContent = "exclude";
+                    badge.classList.add("badge-exclude");
+                } else {
+                    badge.textContent = "keine Regel";
+                    badge.classList.add("badge-none");
+                }
+                tdScope.appendChild(badge);
+
+                const tdAction = document.createElement("td");
+
+                const btnIn = document.createElement("button");
+                btnIn.textContent = "Include";
+                btnIn.classList.add("include");
+                btnIn.onclick = () => setScope(r.id, "include", type);
+
+                const btnEx = document.createElement("button");
+                btnEx.textContent = "Exclude";
+                btnEx.classList.add("exclude");
+                btnEx.onclick = () => setScope(r.id, "exclude", type);
+
+                const btnDel = document.createElement("button");
+                btnDel.textContent = "Löschen";
+                btnDel.classList.add("delete");
+                btnDel.onclick = () => deleteScope(r.id, type);
+
+                tdAction.appendChild(btnIn);
+                tdAction.appendChild(btnEx);
+                tdAction.appendChild(btnDel);
+
+                tr.appendChild(tdId);
+                tr.appendChild(tdName);
+                tr.appendChild(tdType);
+                tr.appendChild(tdScope);
+                tr.appendChild(tdAction);
+
+                tbody.appendChild(tr);
+            });
+
+            status.textContent = `Regionen: ${regions.length}, Scopes: ${Array.isArray(scopes) ? scopes.length : 0}`;
+
+        } catch (err) {
+            console.error(err);
+            status.textContent = "Fehler beim Aufbau der Tabelle.";
+        }
+    }
+
+    async function setScope(regionId, target, current) {
+        const status = document.getElementById("status");
+        if (!CURRENT_CLIENT_ID) return;
+
+        try {
+            if (current === "none") {
+                const res = await fetch(`/clients/${CURRENT_CLIENT_ID}/regions`, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({ region_id: regionId, scope_type: target })
+                });
+                if (!res.ok) {
+                    status.textContent = `Fehler beim Anlegen: ${res.status}`;
+                    return;
+                }
+            } else {
+                const res = await fetch(`/clients/${CURRENT_CLIENT_ID}/regions/${regionId}`, {
+                    method: "PATCH",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({ scope_type: target })
+                });
+                if (!res.ok) {
+                    status.textContent = `Fehler beim Ändern: ${res.status}`;
+                    return;
+                }
+            }
+
+            status.textContent = `Scope für Region ${regionId} -> ${target} gesetzt.`;
+            await loadScopes();
+
+        } catch (err) {
+            console.error(err);
+            status.textContent = "Fehler beim Setzen des Scopes.";
+        }
+    }
+
+    async function deleteScope(regionId, current) {
+        const status = document.getElementById("status");
+        if (!CURRENT_CLIENT_ID) return;
+
+        if (current === "none") {
+            status.textContent = "Kein Scope zu löschen.";
+            return;
+        }
+
+        try {
+            const res = await fetch(`/clients/${CURRENT_CLIENT_ID}/regions/${regionId}`, {
+                method: "DELETE"
+            });
+            if (!res.ok) {
+                status.textContent = `Fehler beim Löschen: ${res.status}`;
+                return;
+            }
+
+            status.textContent = `Scope für Region ${regionId} gelöscht.`;
+            await loadScopes();
+
+        } catch (err) {
+            console.error(err);
+            status.textContent = "Fehler beim Löschen.";
+        }
+    }
+
+    loadClientsAndRegions();
+</script>
+
+</body>
+</html>

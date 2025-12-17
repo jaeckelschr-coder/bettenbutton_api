@@ -1,300 +1,306 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Betten-Button Simulator</title>
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bettenbutton – Simulator (PRESS-Mode)</title>
+  <link rel="stylesheet" href="/static/styles.css" />
   <style>
-    :root {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    body {
-      margin: 0;
-      padding: 1.5rem;
-      background: #f5f5f7;
-      color: #222;
-    }
-
-    .page {
-      max-width: 960px;
-      margin: 0 auto;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-      padding: 1.5rem 1.75rem 2rem;
-    }
-
-    header {
-      margin-bottom: 1.25rem;
-    }
-
-    h1 {
-      font-size: 1.5rem;
-      margin: 0 0 0.25rem 0;
-    }
-
-    .subtitle {
-      font-size: 0.9rem;
-      color: #666;
-    }
-
-    .hint {
-      font-size: 0.8rem;
-      color: #777;
-      margin-top: 0.5rem;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-      font-size: 0.9rem;
-    }
-
-    th, td {
-      padding: 0.55rem 0.4rem;
-      text-align: left;
-    }
-
-    thead {
-      border-bottom: 1px solid #ddd;
-    }
-
-    tbody tr:nth-child(even) {
-      background: #fafafa;
-    }
-
-    .device-name {
-      font-weight: 600;
-    }
-
-    .btn-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.35rem;
-    }
-
-    button {
-      border: none;
-      border-radius: 999px;
-      padding: 0.25rem 0.7rem;
-      font-size: 0.8rem;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      background: #e0e0e0;
-    }
-
-    button span.dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      display: inline-block;
-      background: #999;
-    }
-
-    button.btn-red {
-      background: #ffebee;
-      color: #b71c1c;
-    }
-    button.btn-red span.dot {
-      background: #e53935;
-    }
-
-    button.btn-today {
-      background: #f1f8e9;
-      color: #33691e;
-    }
-    button.btn-today span.dot {
-      background: #43a047;
-    }
-
-    button.btn-multi {
-      background: #e8f5e9;
-      color: #1b5e20;
-    }
-    button.btn-multi span.dot {
-      background: #2e7d32;
-      box-shadow: 4px 0 0 0 #81c784; /* zweite „virtuelle“ grüne LED */
-    }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: wait;
-    }
-
-    .status-msg {
-      font-size: 0.75rem;
-      color: #666;
-    }
-    .status-msg.ok {
-      color: #2e7d32;
-    }
-    .status-msg.error {
-      color: #c62828;
-    }
-
-    .meta {
-      font-size: 0.8rem;
-      color: #777;
-      margin-top: 0.5rem;
-    }
+    /* Falls styles.css fehlt, bleibt es trotzdem nutzbar */
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .wrap { max-width: 1100px; margin: 0 auto; }
+    .topbar { display:flex; gap:12px; align-items:center; flex-wrap: wrap; margin-bottom: 16px; }
+    .btn { padding: 8px 12px; border-radius: 10px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+    .btn:disabled { opacity: .5; cursor:not-allowed; }
+    .btn.primary { font-weight: 700; }
+    .pill { border-radius: 999px; padding: 6px 10px; border: 1px solid #ddd; background:#fafafa; font-size: 12px; }
+    .muted { color:#666; font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid #eee; padding: 10px 8px; vertical-align: top; text-align: left; }
+    th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color:#444; }
+    .rowTitle { font-weight: 700; }
+    .statusBadge { display:inline-flex; align-items:center; gap:8px; padding: 4px 10px; border:1px solid #ddd; border-radius: 999px; background:#fff; font-size: 12px;}
+    .dot { width:10px; height:10px; border-radius: 999px; display:inline-block; border:1px solid #ddd; }
+    .dot.red { background: #f44336; border-color:#f44336; }
+    .dot.green { background:#4caf50; border-color:#4caf50; }
+    .dot.gray { background:#bbb; border-color:#bbb; }
+    .btnGroup { display:flex; gap:8px; flex-wrap: wrap; }
+    .keyInput { padding: 8px 10px; border-radius: 999px; border: 1px solid #ccc; font-size: 12px; width: 220px; }
+    .statusMsg { margin-top: 6px; font-size: 12px; }
+    .statusMsg.ok { color: #1b5e20; }
+    .statusMsg.err { color: #b71c1c; }
+    .right { display:flex; align-items:center; gap: 10px; margin-left: auto; }
+    code { background:#f6f6f6; padding: 2px 6px; border-radius: 6px; }
   </style>
 </head>
-<body>
-<div class="page">
-  <header>
-    <h1>Betten-Button Simulator</h1>
-    <div class="subtitle">
-      Simulation der Hardware-Buttons &ndash; sendet Statusänderungen an die Betten-Button API.
-    </div>
-    <div class="hint">
-      Tipp: Dashboard und Simulator nebeneinander öffnen. Im Simulator klicken, im Dashboard die Änderungen beobachten.
-    </div>
-  </header>
 
-  <div class="meta" id="metaInfo">Lade Geräte...</div>
+<body>
+<div class="wrap">
+  <h1>Bettenbutton – Simulator</h1>
+  <div class="muted">
+    Dieser Simulator arbeitet wie die Hardware: Er sendet ausschließlich <code>POST /devices/{id}/press</code>.
+    (Kein direktes Setzen von Statuswerten.)
+  </div>
+
+  <div class="topbar">
+    <button id="btnReload" class="btn primary">🔄 Geräte laden</button>
+    <span id="conn" class="pill">Bereit</span>
+
+    <div class="right">
+      <span class="muted">API-Basis:</span>
+      <code id="apiBase"></code>
+    </div>
+  </div>
 
   <table>
     <thead>
       <tr>
-        <th>Betrieb</th>
-        <th>Geräte-ID</th>
+        <th style="width: 180px;">Gerät</th>
+        <th style="width: 220px;">Aktueller Status</th>
+        <th style="width: 260px;">X-Device-Key</th>
         <th>Aktionen</th>
-        <th>Rückmeldung</th>
       </tr>
     </thead>
-    <tbody id="simulatorBody">
-      <!-- JS füllt hier die Zeilen -->
+    <tbody id="rows">
+      <tr><td colspan="4" class="muted">Noch keine Daten. Klicke „Geräte laden“.</td></tr>
     </tbody>
   </table>
 </div>
 
 <script>
-  async function loadDevices() {
-    const meta = document.getElementById("metaInfo");
-    const tbody = document.getElementById("simulatorBody");
-    meta.textContent = "Lade Geräte...";
-    tbody.innerHTML = "";
+  // Basis: gleiches Origin wie Backend
+  const API_BASE = "";
+  document.getElementById("apiBase").textContent = (location.origin + "/");
 
+  const connEl = document.getElementById("conn");
+  const rowsEl = document.getElementById("rows");
+  const btnReload = document.getElementById("btnReload");
+
+  function setConn(text, ok=true) {
+    connEl.textContent = text;
+    connEl.style.borderColor = ok ? "#c8e6c9" : "#ffcdd2";
+    connEl.style.background = ok ? "#e8f5e9" : "#ffebee";
+  }
+
+  function statusToLabel(s) {
+    if (s === 0) return "🔴 Keine Verfügbarkeit";
+    if (s === 1) return "🟢 Heute verfügbar";
+    if (s === 2) return "🟢🟢 Mehrere Tage verfügbar";
+    return "Unbekannt";
+  }
+
+  function statusToDots(s) {
+    // Visual: rot / grün / grün+grün
+    if (s === 0) return `<span class="dot red"></span>`;
+    if (s === 1) return `<span class="dot green"></span>`;
+    if (s === 2) return `<span class="dot green"></span><span class="dot green"></span>`;
+    return `<span class="dot gray"></span>`;
+  }
+
+  function fmtTime(iso) {
+    if (!iso) return "—";
     try {
-      const res = await fetch("/devices");
-      if (!res.ok) {
-        throw new Error("HTTP " + res.status);
-      }
-      const devices = await res.json();
-
-      if (!Array.isArray(devices) || devices.length === 0) {
-        meta.textContent = "Keine Geräte gefunden.";
-        return;
-      }
-
-      devices.forEach(dev => {
-        const tr = document.createElement("tr");
-
-        const tdName = document.createElement("td");
-        tdName.className = "device-name";
-        tdName.textContent = dev.name || dev.id;
-
-        const tdId = document.createElement("td");
-        tdId.textContent = dev.id;
-
-        const tdButtons = document.createElement("td");
-        const tdStatus = document.createElement("td");
-
-        const btnGroup = document.createElement("div");
-        btnGroup.className = "btn-group";
-
-        const statusMsg = document.createElement("div");
-        statusMsg.className = "status-msg";
-        statusMsg.textContent = "–";
-        tdStatus.appendChild(statusMsg);
-
-        function setLoading(isLoading) {
-          [btnRed, btnToday, btnMulti].forEach(b => b.disabled = isLoading);
-        }
-
-        function sendStatus(status, label) {
-          setLoading(true);
-          statusMsg.className = "status-msg";
-          statusMsg.textContent = "Sende " + label + "…";
-
-          fetch(`/devices/${encodeURIComponent(dev.id)}/status`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              status: status,
-              source: "simulator"
-            })
-          })
-            .then(response => {
-              if (!response.ok) {
-                throw new Error("HTTP " + response.status);
-              }
-              return response.json();
-            })
-            .then(data => {
-              statusMsg.className = "status-msg ok";
-              const ts = data.lastUpdate ? new Date(data.lastUpdate) : new Date();
-              const t = ts.toLocaleTimeString("de-DE", {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit"
-              });
-              statusMsg.textContent = `OK (${label}, ${t})`;
-            })
-            .catch(err => {
-              console.error(err);
-              statusMsg.className = "status-msg error";
-              statusMsg.textContent = "Fehler: " + err.message;
-            })
-            .finally(() => {
-              setLoading(false);
-            });
-        }
-
-        const btnRed = document.createElement("button");
-        btnRed.className = "btn-red";
-        btnRed.innerHTML = `<span class="dot"></span><span>Keine Verfügbarkeit</span>`;
-        btnRed.addEventListener("click", () => sendStatus(0, "keine Verfügbarkeit"));
-
-        const btnToday = document.createElement("button");
-        btnToday.className = "btn-today";
-        btnToday.innerHTML = `<span class="dot"></span><span>Verfügbarkeit heute</span>`;
-        btnToday.addEventListener("click", () => sendStatus(1, "Verfügbarkeit heute"));
-
-        const btnMulti = document.createElement("button");
-        btnMulti.className = "btn-multi";
-        btnMulti.innerHTML = `<span class="dot"></span><span>Verfügbarkeit mehrere Tage</span>`;
-        btnMulti.addEventListener("click", () => sendStatus(2, "Verfügbarkeit mehrere Tage"));
-
-        btnGroup.appendChild(btnRed);
-        btnGroup.appendChild(btnToday);
-        btnGroup.appendChild(btnMulti);
-
-        tdButtons.appendChild(btnGroup);
-
-        tr.appendChild(tdName);
-        tr.appendChild(tdId);
-        tr.appendChild(tdButtons);
-        tr.appendChild(tdStatus);
-
-        tbody.appendChild(tr);
-      });
-
-      meta.textContent = `Geräte geladen: ${devices.length}`;
-    } catch (err) {
-      console.error(err);
-      meta.textContent = "Fehler beim Laden der Geräte: " + err.message;
+      const d = new Date(iso);
+      return d.toLocaleString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit", day: "2-digit", month: "2-digit" });
+    } catch {
+      return iso;
     }
   }
 
-  document.addEventListener("DOMContentLoaded", loadDevices);
+  async function fetchDevices() {
+    setConn("Lade Geräte…", true);
+    const res = await fetch(`${API_BASE}/devices`);
+    if (!res.ok) throw new Error(`GET /devices → HTTP ${res.status}`);
+    return await res.json();
+  }
+
+  function clearRows() {
+    rowsEl.innerHTML = "";
+  }
+
+  function addRow(dev) {
+    const tr = document.createElement("tr");
+
+    const local = {
+      // lokale Status-Sicht (damit wir target-presses korrekt berechnen)
+      status: Number(dev.status ?? dev.current_status ?? 0)
+    };
+
+    // --- Spalte 1: Gerät
+    const td1 = document.createElement("td");
+    td1.innerHTML = `
+      <div class="rowTitle">${dev.id}</div>
+      <div class="muted">${dev.name ?? ""}</div>
+      <div class="muted">${dev.location ?? ""}</div>
+    `;
+    tr.appendChild(td1);
+
+    // --- Spalte 2: Status
+    const td2 = document.createElement("td");
+    const statusBadge = document.createElement("div");
+    statusBadge.className = "statusBadge";
+    statusBadge.innerHTML = `
+      <span>${statusToDots(local.status)}</span>
+      <span>${statusToLabel(local.status)}</span>
+    `;
+
+    const last = document.createElement("div");
+    last.className = "muted";
+    last.textContent = `Letztes Update: ${fmtTime(dev.lastUpdate ?? dev.last_update)}`;
+
+    td2.appendChild(statusBadge);
+    td2.appendChild(last);
+    tr.appendChild(td2);
+
+    // --- Spalte 3: Key Input
+    const td3 = document.createElement("td");
+    const keyInput = document.createElement("input");
+    keyInput.className = "keyInput";
+    keyInput.type = "password";
+    keyInput.placeholder = "X-Device-Key (pro Gerät)";
+    td3.appendChild(keyInput);
+    tr.appendChild(td3);
+
+    // --- Spalte 4: Aktionen
+    const td4 = document.createElement("td");
+    const btnGroup = document.createElement("div");
+    btnGroup.className = "btnGroup";
+
+    const msg = document.createElement("div");
+    msg.className = "statusMsg";
+
+    function setLoading(isLoading) {
+      [btnPress, btnRed, btnToday, btnMulti].forEach(b => b.disabled = isLoading);
+      btnReload.disabled = isLoading;
+    }
+
+    async function pressOnce() {
+      const key = keyInput.value.trim();
+      if (!key) throw new Error("Bitte X-Device-Key eingeben.");
+
+      const res = await fetch(`${API_BASE}/devices/${encodeURIComponent(dev.id)}/press`, {
+        method: "POST",
+        headers: {
+          "X-Device-Key": key
+        }
+      });
+      if (!res.ok) throw new Error(`POST /press → HTTP ${res.status}`);
+      const data = await res.json();
+
+      // lokales Modell aktualisieren
+      local.status = Number(data.status);
+
+      // UI aktualisieren
+      statusBadge.innerHTML = `
+        <span>${statusToDots(local.status)}</span>
+        <span>${statusToLabel(local.status)}</span>
+      `;
+      last.textContent = `Letztes Update: ${fmtTime(data.lastUpdate)}`;
+
+      return data;
+    }
+
+    async function pressToTarget(targetStatus, label) {
+      setLoading(true);
+      msg.className = "statusMsg";
+      msg.textContent = `Sende ${label} (über Press)…`;
+
+      try {
+        const presses = (targetStatus - local.status + 3) % 3;
+        let lastData = null;
+
+        for (let i = 0; i < presses; i++) {
+          lastData = await pressOnce();
+        }
+
+        msg.className = "statusMsg ok";
+        if (presses === 0) {
+          msg.textContent = `OK (bereits: ${label})`;
+        } else {
+          msg.textContent = `OK (${label})`;
+        }
+      } catch (e) {
+        console.error(e);
+        msg.className = "statusMsg err";
+        msg.textContent = `Fehler: ${e.message}`;
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // Buttons
+    const btnPress = document.createElement("button");
+    btnPress.className = "btn primary";
+    btnPress.textContent = "PRESS (wie Hardware)";
+    btnPress.addEventListener("click", async () => {
+      setLoading(true);
+      msg.className = "statusMsg";
+      msg.textContent = "Sende PRESS…";
+      try {
+        const data = await pressOnce();
+        msg.className = "statusMsg ok";
+        msg.textContent = `OK (Status jetzt: ${data.status})`;
+      } catch (e) {
+        console.error(e);
+        msg.className = "statusMsg err";
+        msg.textContent = `Fehler: ${e.message}`;
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    const btnRed = document.createElement("button");
+    btnRed.className = "btn";
+    btnRed.textContent = "🔴 Rot";
+    btnRed.addEventListener("click", () => pressToTarget(0, "keine Verfügbarkeit"));
+
+    const btnToday = document.createElement("button");
+    btnToday.className = "btn";
+    btnToday.textContent = "🟢 Heute";
+    btnToday.addEventListener("click", () => pressToTarget(1, "Verfügbarkeit heute"));
+
+    const btnMulti = document.createElement("button");
+    btnMulti.className = "btn";
+    btnMulti.textContent = "🟢🟢 Mehrere Tage";
+    btnMulti.addEventListener("click", () => pressToTarget(2, "Verfügbarkeit mehrere Tage"));
+
+    btnGroup.appendChild(btnPress);
+    btnGroup.appendChild(btnRed);
+    btnGroup.appendChild(btnToday);
+    btnGroup.appendChild(btnMulti);
+
+    td4.appendChild(btnGroup);
+    td4.appendChild(msg);
+    tr.appendChild(td4);
+
+    rowsEl.appendChild(tr);
+  }
+
+  async function reload() {
+    try {
+      setConn("Lade Geräte…", true);
+      clearRows();
+      const devices = await fetchDevices();
+
+      if (!Array.isArray(devices) || devices.length === 0) {
+        rowsEl.innerHTML = `<tr><td colspan="4" class="muted">Keine Geräte vorhanden.</td></tr>`;
+        setConn("OK (0 Geräte)", true);
+        return;
+      }
+
+      devices.forEach(addRow);
+      setConn(`OK (${devices.length} Geräte)`, true);
+    } catch (e) {
+      console.error(e);
+      rowsEl.innerHTML = `<tr><td colspan="4" class="muted">Fehler beim Laden: ${e.message}</td></tr>`;
+      setConn("Fehler", false);
+    }
+  }
+
+  btnReload.addEventListener("click", reload);
+
+  // Auto-load beim Start
+  reload();
 </script>
 </body>
 </html>

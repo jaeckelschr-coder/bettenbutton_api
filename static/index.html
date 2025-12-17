@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Betten-Button Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+
+    <!-- LOGIN-SEITE -->
+    <section id="login-view" class="view active">
+        <div class="login-card">
+            <h1>Betten-Button Portal</h1>
+            <p class="subtitle">Bitte melden Sie sich an.</p>
+
+            <form id="login-form" onsubmit="return false;">
+                <label for="username">Benutzername</label>
+                <input type="text" id="username" required>
+
+                <label for="password">Passwort</label>
+                <input type="password" id="password" required>
+
+                <!-- WICHTIG: Inline-Handler -->
+                <button type="button" class="btn primary" onclick="simpleLogin()">Anmelden</button>
+            </form>
+
+            <p id="login-error" class="error-message"></p>
+
+            <div class="login-info">
+                <p><strong>Demo-Zugang:</strong></p>
+                <ul>
+                    <li>Admin: <code>admin / admin</code></li>
+                    <li>Kunde: <code>ti / ti</code></li>
+                </ul>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <a href="#" onclick="openModal('impressum-modal'); return false;">Impressum</a> ·
+            <a href="#" onclick="openModal('kontakt-modal'); return false;">Kontakt</a> ·
+            <a href="#" onclick="openModal('datenschutz-modal'); return false;">Datenschutz</a>
+        </footer>
+    </section>
+
+    <!-- ADMIN-PORTAL -->
+    <section id="admin-view" class="view">
+        <header class="topbar">
+            <div class="logo">Betten-Button <span class="tag">Admin</span></div>
+           <nav class="topnav">
+                <button class="nav-btn active" onclick="showAdminSection('admin-customers', this)">Kunden</button>
+                <button class="nav-btn" onclick="showAdminSection('admin-hosts', this)">Gastgeber</button>
+                <button class="nav-btn" onclick="showAdminSection('admin-devices', this)">Geräte</button>
+            </nav>
+
+            <div class="topbar-right">
+                <span id="admin-username"></span>
+                <button class="btn ghost" onclick="simpleLogout()">Logout</button>
+            </div>
+        </header>
+
+        <main class="content">
+            <!-- Kunden -->
+            <section id="admin-customers" class="admin-section active">
+                <div class="section-header">
+                    <h2>Kunden (Touristinfos)</h2>
+                    <button class="btn secondary">Neuen Kunden anlegen (Demo)</button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Ort</th>
+                        <th>Kontakt</th>
+                        <th>Zuordnungen</th>
+                        <th>Aktionen</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Tourist-Information Schiltach</td>
+                        <td>Schiltach</td>
+                        <td>info@schiltach.de</td>
+                        <td>2 Gastgeber</td>
+                        <td><button class="btn secondary btn-small">Gastgeber zuordnen (Demo)</button></td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Tourist-Info Haslach</td>
+                        <td>Haslach</td>
+                        <td>tourismus@haslach.de</td>
+                        <td>1 Gastgeber</td>
+                        <td><button class="btn secondary btn-small">Gastgeber zuordnen (Demo)</button></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Gastgeber -->
+            <section id="admin-hosts" class="admin-section">
+                <div class="section-header">
+                    <h2>Gastgeber</h2>
+                    <button class="btn secondary">Neuen Gastgeber anlegen (Demo)</button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Ort</th>
+                        <th>Kunde</th>
+                        <th>Geräte</th>
+                        <th>Aktionen</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Hotel Sonne</td>
+                        <td>Schiltach</td>
+                        <td>Tourist-Information Schiltach</td>
+                        <td>2 Geräte</td>
+                        <td>
+                            <button class="btn secondary btn-small">Kunde ändern (Demo)</button>
+                            <button class="btn secondary btn-small">Geräte verknüpfen (Demo)</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Pension Kinzigtalblick</td>
+                        <td>Schiltach</td>
+                        <td>Tourist-Information Schiltach</td>
+                        <td>1 Gerät</td>
+                        <td>
+                            <button class="btn secondary btn-small">Kunde ändern (Demo)</button>
+                            <button class="btn secondary btn-small">Geräte verknüpfen (Demo)</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>Ferienwohnung Am Markt</td>
+                        <td>Haslach</td>
+                        <td>Tourist-Info Haslach</td>
+                        <td>0 Geräte</td>
+                        <td>
+                            <button class="btn secondary btn-small">Kunde ändern (Demo)</button>
+                            <button class="btn secondary btn-small">Geräte verknüpfen (Demo)</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Geräte -->
+            <section id="admin-devices" class="admin-section">
+                <div class="section-header">
+                    <h2>Geräte</h2>
+                    <button class="btn secondary">Neues Gerät registrieren (Demo)</button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Seriennummer</th>
+                        <th>Beschreibung</th>
+                        <th>Gastgeber</th>
+                        <th>Zuletzt online</th>
+                        <th>Aktionen</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>BB-ESP32-0001</td>
+                        <td>Eingang Rezeption</td>
+                        <td>Hotel Sonne</td>
+                        <td>10.12.2025 21:34</td>
+                        <td>
+                            <button class="btn secondary btn-small">Gastgeber zuweisen (Demo)</button>
+                            <button class="btn secondary btn-small">Programmieren (Demo)</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>BB-ESP32-0002</td>
+                        <td>Etage 1</td>
+                        <td>Hotel Sonne</td>
+                        <td>10.12.2025 21:30</td>
+                        <td>
+                            <button class="btn secondary btn-small">Gastgeber zuweisen (Demo)</button>
+                            <button class="btn secondary btn-small">Programmieren (Demo)</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>BB-ESP32-0003</td>
+                        <td>Info-Theke</td>
+                        <td>Pension Kinzigtalblick</td>
+                        <td>09.12.2025 18:11</td>
+                        <td>
+                            <button class="btn secondary btn-small">Gastgeber zuweisen (Demo)</button>
+                            <button class="btn secondary btn-small">Programmieren (Demo)</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>BB-ESP32-0004</td>
+                        <td>Eingang</td>
+                        <td>–</td>
+                        <td>-</td>
+                        <td>
+                            <button class="btn secondary btn-small">Gastgeber zuweisen (Demo)</button>
+                            <button class="btn secondary btn-small">Programmieren (Demo)</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </section>
+
+    <!-- KUNDEN-DASHBOARD -->
+    <section id="customer-view" class="view">
+        <header class="topbar">
+            <div class="logo">Betten-Button <span class="tag">Kunde</span></div>
+            <div class="topbar-right">
+                <span id="customer-username"></span>
+                <button class="btn ghost" onclick="simpleLogout()">Logout</button>
+            </div>
+        </header>
+
+        <main class="content">
+            <h2>Betriebe &amp; Ampelstatus</h2>
+
+            <div class="filters">
+                <input type="text" id="host-search" placeholder="Gastgeber suchen…" oninput="filterDashboard()">
+                <select id="status-filter" onchange="filterDashboard()">
+                    <option value="">Alle</option>
+                    <option value="green">frei</option>
+                    <option value="yellow">teilweise</option>
+                    <option value="red">belegt</option>
+                </select>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Ort</th>
+                    <th>Status</th>
+                    <th>Letzte Aktualisierung</th>
+                </tr>
+                </thead>
+                <tbody id="customer-dashboard-body">
+                <tr data-status="green">
+                    <td>Hotel Sonne</td>
+                    <td>Schiltach</td>
+                    <td>
+                        <span class="status-pill status-green">
+                            <span class="status-dot"></span> frei
+                        </span>
+                    </td>
+                    <td>Heute, 09:15</td>
+                </tr>
+                <tr data-status="yellow">
+                    <td>Pension Kinzigtalblick</td>
+                    <td>Schiltach</td>
+                    <td>
+                        <span class="status-pill status-yellow">
+                            <span class="status-dot"></span> teilweise belegt
+                        </span>
+                    </td>
+                    <td>Heute, 08:40</td>
+                </tr>
+                <tr data-status="red">
+                    <td>Ferienwohnung Am Markt</td>
+                    <td>Haslach</td>
+                    <td>
+                        <span class="status-pill status-red">
+                            <span class="status-dot"></span> belegt
+                        </span>
+                    </td>
+                    <td>Gestern, 17:05</td>
+                </tr>
+                </tbody>
+            </table>
+        </main>
+    </section>
+</div>
+
+<!-- MODALS: IMPRESSUM / KONTAKT / DATENSCHUTZ -->
+<div id="impressum-modal" class="modal">
+    <div class="modal-content">
+        <h2>Impressum</h2>
+        <p>Hier folgt später der echte Text.</p>
+        <button class="btn" onclick="closeModal('impressum-modal')">Schließen</button>
+    </div>
+</div>
+
+<div id="kontakt-modal" class="modal">
+    <div class="modal-content">
+        <h2>Kontakt</h2>
+        <p>Tourist-Information Schiltach<br>E-Mail: info@schiltach.de</p>
+        <button class="btn" onclick="closeModal('kontakt-modal')">Schließen</button>
+    </div>
+</div>
+
+<div id="datenschutz-modal" class="modal">
+    <div class="modal-content">
+        <h2>Datenschutz</h2>
+        <p>Datenschutzhinweise folgen.</p>
+        <button class="btn" onclick="closeModal('datenschutz-modal')">Schließen</button>
+    </div>
+</div>
+
+<!-- TOAST (optional, hier noch ohne Funktion) -->
+<div id="toast" class="toast"></div>
+
+<!-- INLINE-JAVASCRIPT: KEIN externes app.js nötig -->
+<script>
+    function setActiveView(id) {
+        document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+        const view = document.getElementById(id);
+        if (view) view.classList.add("active");
+    }
+
+    function simpleLogin() {
+        const usernameEl = document.getElementById("username");
+        const passwordEl = document.getElementById("password");
+        const errorEl = document.getElementById("login-error");
+
+        if (!usernameEl || !passwordEl || !errorEl) {
+            console.error("Login-Elemente nicht gefunden");
+            return;
+        }
+
+        const username = usernameEl.value.trim();
+        const password = passwordEl.value.trim();
+
+        console.log("Login-Versuch:", username);
+
+        if (username === "admin" && password === "admin") {
+            errorEl.textContent = "";
+            document.getElementById("admin-username").textContent = username;
+            setActiveView("admin-view");
+        } else if (username === "ti" && password === "ti") {
+            errorEl.textContent = "";
+            document.getElementById("customer-username").textContent = username;
+            setActiveView("customer-view");
+        } else {
+            errorEl.textContent = "Benutzername oder Passwort ist ungültig (Demo-Login: admin/admin oder ti/ti).";
+        }
+    }
+
+    function simpleLogout() {
+        const form = document.getElementById("login-form");
+        if (form) form.reset();
+        const errorEl = document.getElementById("login-error");
+        if (errorEl) errorEl.textContent = "";
+        setActiveView("login-view");
+    }
+
+    function showAdminSection(id, btn) {
+    // Inhalt umschalten
+    document.querySelectorAll(".admin-section").forEach(s => s.classList.remove("active"));
+    const sec = document.getElementById(id);
+    if (sec) sec.classList.add("active");
+
+    // Tab-Button markieren
+    document.querySelectorAll(".topnav .nav-btn").forEach(b => b.classList.remove("active"));
+    if (btn) btn.classList.add("active");
+}
+
+
+    function openModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) modal.classList.add("active");
+    }
+
+    function closeModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) modal.classList.remove("active");
+    }
+
+    function filterDashboard() {
+        const search = document.getElementById("host-search").value.trim().toLowerCase();
+        const status = document.getElementById("status-filter").value;
+        const rows = document.querySelectorAll("#customer-dashboard-body tr");
+
+        rows.forEach(row => {
+            const name = row.cells[0].textContent.toLowerCase();
+            const city = row.cells[1].textContent.toLowerCase();
+            const rowStatus = row.getAttribute("data-status");
+
+            let visible = true;
+
+            if (search && !(name.includes(search) || city.includes(search))) {
+                visible = false;
+            }
+
+            if (status && rowStatus !== status) {
+                visible = false;
+            }
+
+            row.style.display = visible ? "" : "none";
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        console.log("Inline-JS geladen, start mit Login-View");
+        setActiveView("login-view");
+    });
+</script>
+</body>
+</html>

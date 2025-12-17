@@ -1,0 +1,168 @@
+{
+  "name": "Betten-Button Projekt",
+  "desc": "Zentrales Projektboard für Technik, Business, Pilotierung und Dokumentation. Snapshot vom 11.12.2025.",
+  "labels": [
+    {"name": "Technik", "color": "blue"},
+    {"name": "Business/Finanzen", "color": "green"},
+    {"name": "Pilot", "color": "yellow"},
+    {"name": "Bug", "color": "red"},
+    {"name": "Dokumentation", "color": "purple"},
+    {"name": "Idee/Vision", "color": "black"}
+  ],
+  "lists": [
+    {
+      "name": "🔍 Projektübersicht",
+      "cards": [
+        {
+          "name": "Ziele & Nutzen",
+          "desc": "Problem: Kurzfristige Verfügbarkeiten von Unterkünften sind oft weder digital sichtbar noch für Tourist-Informationen oder Gäste schnell abrufbar.\n\nZiele des Betten-Buttons:\n- Echtzeit- oder Nahezu-Echtzeit-Anzeige der Verfügbarkeit bei Gastgebern.\n- Entlastung der Tourist-Information (Telefonate, Nachfragen, Zettelwirtschaft).\n- Bessere Auslastung der Gastgeber durch spontane Buchungen.\n- Skalierbares System, das von einer Stadt (Schiltach) über das Kinzigtal bis hin zu ganzen Regionen ausgerollt werden kann.\n\nNutzen für Gastgeber:\n- Einfachster Bedienvorgang (Knopf drücken statt Software bedienen).\n- Sichtbarkeit der freien Kapazitäten über zentrale Stellen (TI, evtl. Website oder Displays im Ort).\n- Keine komplexe IT-Einführung, sehr niedrige Einstiegshürde.\n\nNutzen für Kommunen / Regionen:\n- Besserer Überblick über Bettenkapazitäten.\n- Stärkung der regionalen Tourismus-Infrastruktur.\n- Argument gegenüber Politik und Förderstellen: Digitalisierung und Effizienzsteigerung bei der Gästebetreuung.\n\nVision 2025–2027:\n- Pilotbetrieb in Schiltach.\n- Ausbau auf das Kinzigtal.\n- Angebot als modularer Baustein für andere Kommunen/Regionen im Schwarzwald und in Baden-Württemberg.",
+          "labels": ["Dokumentation"]
+        },
+        {
+          "name": "Projektstatus (Ampel)",
+          "desc": "Status: 🟡 GELB (11.12.2025)\n\nBegründung:\n- Backend (FastAPI) ist als Prototyp lauffähig (lokal und auf einem Hoster testweise deployt).\n- Frontend: Login-Seite vorhanden, Menü-Struktur sichtbar, aber noch nicht voll funktionsfähig.\n- Businessmodell: Grundidee (Hardwareverkauf an Gastgeber, Abo für Kommunen mit Staffelung) ist definiert, Details der Kalkulation müssen noch ausgearbeitet und getestet werden.\n- Pilot: Konzept in Arbeit, aber noch kein praktischer Rollout.\n\nNächste Meilensteine:\n- Login-Problem im Frontend beheben.\n- Datenmodell finalisieren.\n- Menü-Funktionen definieren und mit API verbinden.\n- Business-Kalkulation (Staffelpreise & Kostenstruktur) verfeinern.",
+          "labels": ["Dokumentation"]
+        },
+        {
+          "name": "Stakeholder & Beteiligte",
+          "desc": "Stakeholder-Übersicht:\n\nPrimäre Stakeholder:\n- Gastgeber (Ferienwohnungen, Hotels, Pensionen) im ersten Schritt v.a. in Schiltach.\n- Stadt Schiltach (öffentlicher Akteur, Betreiber/Initiator des Systems).\n- Tourist-Information Schiltach (operative Nutzung, Beratung der Gäste).\n\nSekundäre Stakeholder:\n- Kinzigtal Tourismus und weitere regionale Tourismusorganisationen.\n- Weitere Kommunen im Kinzigtal / Schwarzwald als potentielle Nutzer.\n\nTechnische Stakeholder:\n- Hardwarehersteller (Serienfertigung des Buttons, später ggf. LED-Tafeln).\n- Hoster/Provider für Backend (z.B. Render, andere Cloud-Anbieter).\n\nPotentielle Partner:\n- Fördermittelgeber (TIP, Naturpark, LEADER, Digitalisierungsprogramme).\n- Mögliche Business Angels / Investoren im Bereich Tourismus-Tech.\n\nBitte bei Bedarf Namen/Kontakte konkret ergänzen.",
+          "labels": ["Dokumentation"]
+        },
+        {
+          "name": "Entscheidungsprotokoll",
+          "desc": "Bitte wichtige Projektentscheidungen chronologisch dokumentieren.\n\nBisherige Kernentscheidungen (aus den bisherigen Gesprächen):\n\n• 07.12.2025 – Geschäftsmodellgrundsatz: Gastgeber kaufen die Hardware zum Fixpreis; Kommunen zahlen ein Abo (statt Abo für Gastgeber). Begründung: Gastgeber akzeptieren Abos erfahrungsgemäß schlecht.\n• 07.12.2025 – Für Kommunen sind die Budgets knapp, daher werden Staffelpreise mit unterschiedlichen Gerätestufen (z.B. 10 / 20 / 40 / 75 / 100 Geräte) angestrebt.\n• 08.12.2025 – Backend-Technologie: Verwendung von FastAPI für die Betten-Button-API.\n• 08.12.2025 – Deployment: Nutzung eines Hosters (z.B. Render) für das erste Online-Staging des Backends.\n• 11.12.2025 – Projektorganisation: Trello als zentraler Projekt-Hub für Betten-Button, mit klaren Listen (Dokumentation, To-Do, In Bearbeitung, Fertig etc.).\n\nFormat für weitere Einträge:\nDATUM – ENTSCHEIDUNG – WARUM – KONSEQUENZEN",
+          "labels": ["Dokumentation"]
+        }
+      ]
+    },
+    {
+      "name": "📚 Dokumentation – Technik",
+      "cards": [
+        {
+          "name": "Hardware",
+          "desc": "Aktueller Stand Hardware:\n\nKomponenten:\n- ESP32 als zentrale Steuereinheit/Controller.\n- Physischer Taster (Button), der den Verfügbarkeitsstatus meldet.\n- Stromversorgung (Batterie / ggf. später Netzteil je nach Einbauort).\n\nKonzept:\n- Der ESP32 wird so konfiguriert, dass er die meiste Zeit im Energiesparmodus (Deep Sleep) verbringt.\n- Bei Tastendruck wacht das Gerät auf, verbindet sich mit WLAN bzw. Backend und sendet ein Signal (z.B. „Zimmer verfügbar“ / „nicht verfügbar“).\n- Nach erfolgreicher Übertragung kehrt das Gerät in den Sleep-Modus zurück.\n\nOffene Punkte:\n- Konkrete Pin-Belegung des Buttons am ESP32 (GND, GPIO, ggf. interner Pull-Up).\n- Feinjustierung des Energiesparverhaltens (Wie schnell ist der Controller nach dem Aufwachen wieder online? Sicherstellung, dass das Signal zuverlässig übertragen wird).\n- Auswahl eines Herstellers für die Serienfertigung der Gehäuse inkl. Button.\n- Optionale Erweiterung: Anbindung an eine externe LED-Anzeige (z.B. im Ort, an einer Alu-Dibond-Tafel).\n\nTo-Do:\n- Schaltplan sauber dokumentieren.\n- Ersten Prototyp testen (Stabilität, Batterielaufzeit, Verbindungszuverlässigkeit).",
+          "labels": ["Technik", "Dokumentation"]
+        },
+        {
+          "name": "Backend (FastAPI)",
+          "desc": "Aktueller Stand Backend:\n\nTechnologie:\n- FastAPI als Webframework.\n- Uvicorn als ASGI-Server.\n- Datenbank-Anbindung über SQLAlchemy (SessionLocal, Base, engine etc.).\n- Statisches Verzeichnis für das Frontend (z.B. /static).\n\nFunktionalität:\n- Grund-API läuft lokal und wurde bereits erfolgreich auf einem Hoster (z.B. Render) deployt („Es läuft :-)“).\n- Basiskonfiguration mit CORS-Middleware ist vorhanden.\n- Datenbanktabellen werden über `Base.metadata.create_all(bind=engine)` initialisiert.\n\nOffene Punkte:\n- Endpunkt-Spezifikation (z.B. /buttons, /status, /hosts, /login).\n- Authentifizierung und Rollenmodell (Admin, Gastgeber, evtl. Kommune).\n- Fehlerhandling und Logging.\n- Finale Definition des Datenmodells (siehe Karte „Datenmodell finalisieren“).\n\nTo-Do:\n- API-Dokumentation (OpenAPI/Swagger) prüfen und vervollständigen.\n- Testdaten anlegen.\n- Unit-Tests bzw. Integrationstests aufsetzen.",
+          "labels": ["Technik", "Dokumentation"]
+        },
+        {
+          "name": "Frontend",
+          "desc": "Aktueller Stand Frontend:\n\n- Login-Seite wird ausgeliefert und angezeigt.\n- Menü-Reiter sind sichtbar, aber größtenteils noch ohne Funktion.\n- Der Login-Button reagierte zeitweise nicht (Bug, siehe separate Bug-Karte).\n\nZielbild Frontend:\n- Klar strukturiertes Dashboard für Admins/TI.\n- Simple Ansicht für Gastgeber (z.B. ‚Verfügbar / Nicht verfügbar‘, Historie optional).\n- Übersichtsseite für alle Buttons (Status, letzter Kontakt, Gastgeber-Zuordnung).\n\nOffene Punkte:\n- Fix des Login-Buttons inklusive Fehlermeldungen bei falschen Logins.\n- Definition der Menüfunktionen (siehe Karte „Frontend-Menü: Funktionen definieren“).\n- Umsetzung von Rollenrechten im Frontend (was sieht Admin, was sieht Gastgeber?).\n\nTo-Do:\n- Login-Bug beheben.\n- Menüs mit den passenden API-Endpunkten verbinden.\n- UX-Feinschliff (z.B. klare Statusfarben, verständliche Texte).",
+          "labels": ["Technik", "Dokumentation"]
+        },
+        {
+          "name": "Technische Aufgaben – nächste Iteration",
+          "desc": "Sammelkarte für kommende technische Aufgaben:\n\nKurzfristige Tasks:\n- Login-Button reparieren (Fehleranalyse + Fix).\n- Datenmodell finalisieren und dokumentieren.\n- Menüstruktur des Frontends definieren.\n\nMittelfristige Tasks:\n- Hardware-Firmware (Deep Sleep + Zuverlässigkeit) testen.\n- API-Härtung (Fehlerfälle, Timeouts, Logging).\n- Vorbereitung Pilotbetrieb (Staging-Umgebung, Testdaten, Monitoring).\n\nLangfristige Ideen:\n- Schnittstellen zu bestehenden Buchungssystemen prüfen.\n- Mobile Ansicht / Responsive Design.\n- Öffentliche Status-API für Städte/Infotafeln.",
+          "labels": ["Technik", "Dokumentation"]
+        }
+      ]
+    },
+    {
+      "name": "💼 Dokumentation – Business & Strategie",
+      "cards": [
+        {
+          "name": "Preismodell",
+          "desc": "Grundidee Preismodell (Stand 11.12.2025):\n\nFür Gastgeber:\n- Kauf der Hardware (Betten-Button) zum Fixpreis je Gerät.\n- Kein laufendes Abo für Gastgeber, um Akzeptanzhürden zu senken.\n\nFür Kommunen/Städte/Regionen:\n- Lizenz- bzw. Service-Abo für den Betrieb des Systems.\n- Staffelung nach Anzahl betreuter Geräte, z.B. 10 / 20 / 40 / 75 / 100.\n- Hintergrund: Viele Kommunen kämpfen mit knappen Haushalten; Preise müssen argumentierbar sein.\n\nArgumentation:\n- Gastgeber haben eine einmalige Investition in ein physisches Produkt.\n- Kommunen bekommen ein Werkzeug zur besseren Auslastung und Gästelenkung.\n- Durch mögliche Fördermittel (TIP, Digitalisierungsprogramme etc.) können Einstiegskosten reduziert werden.\n\nOffene Punkte:\n- Konkrete Euro-Beträge je Hardware-Gerät.\n- Abo-Preise und Leistungsumfang je Staffel.\n- Break-Even-Berechnung und Margen.\n\nTo-Do:\n- Kostenstruktur (Hardware, Entwicklung, Hosting, Support) detailliert auflisten.\n- Preisszenarien durchrechnen.\n- Argumentationspapier für Bürgermeister/Gemeinderat erstellen.",
+          "labels": ["Business/Finanzen", "Dokumentation"]
+        },
+        {
+          "name": "Fördermöglichkeiten",
+          "desc": "Mögliche Förderprogramme (Stand: generelle Überlegungen):\n\n- TIP (Tourismusinfrastruktur-Programm des Landes):\n  • Für digitale Infrastruktur und touristische Serviceverbesserungen.\n- Naturpark-Förderung:\n  • Wenn der Betten-Button in ein größeres touristisches Konzept eingebettet ist.\n- LEADER:\n  • Für innovative Projekte im ländlichen Raum, z.B. digitale Gästeinformation.\n- Weitere Digitalisierungsprogramme des Landes/Bundes.\n\nTo-Do:\n- Prüfen, unter welchen Fördertatbeständen der Betten-Button fallen könnte.\n- Grobe Kostenschätzung vorbereiten.\n- Förderantrag-Skizzen für mind. ein Programm vorbereiten.",
+          "labels": ["Business/Finanzen", "Dokumentation"]
+        },
+        {
+          "name": "Positionierung & Pitch",
+          "desc": "Positionierung:\n- Produkt an der Schnittstelle von analoger Einfachheit (Knopf) und digitaler Verfügbarkeit (Backend/Anzeige).\n- Nicht ‚noch ein Buchungssystem‘, sondern ein Verfügbarkeits- und Informationssystem.\n\nZielgruppen:\n- Kleinere und mittlere Gastgeber mit wenig Digitalisierungsgrad.\n- Kommunen und Regionen, die ihre Betten-Kapazitäten besser im Blick haben wollen.\n\nPitch-Kernelemente:\n- Einfachheit für Gastgeber.\n- Mehr Überblick und Servicequalität für Tourist-Information und Kommune.\n- Förderfähigkeit als Digitalisierungsbaustein im Tourismus.\n\nTo-Do:\n- Kurz-Pitch (2–3 Sätze) formulieren.\n- Lang-Pitch (1 Seite) für Präsentationen ausarbeiten.\n- Präsentationsfolien entwerfen (für Bürgermeister, Gemeinderäte, Tourismusgremien).",
+          "labels": ["Business/Finanzen", "Dokumentation"]
+        }
+      ]
+    },
+    {
+      "name": "🧪 Pilotprojekt Schiltach",
+      "cards": [
+        {
+          "name": "Technischer Pilot – Ablauf",
+          "desc": "Ziel: Kleiner Pilot in Schiltach mit ausgewählten Gastgebern.\n\nKapitel:\n- Auswahl von 2–5 Pilotgastgebern.\n- Einbau der Betten-Buttons.\n- Einrichtung der Zugänge (Frontend, ggf. einfache Anleitungen).\n- Test der Statusübermittlung (Button → Backend → Anzeige/TI).\n\nTo-Do:\n- Kriterien für Pilotgastgeber definieren.\n- Gastgeber ansprechen und auswählen.\n- Zeitplan für Einbau und Schulung erstellen.",
+          "labels": ["Pilot", "Dokumentation"]
+        },
+        {
+          "name": "Rückmeldungen Gastgeber",
+          "desc": "Sammelkarte für Feedback aus dem Pilotbetrieb.\n\nStrukturvorschlag:\n- Gastgeber A – Rückmeldung\n- Gastgeber B – Rückmeldung\n- Gastgeber C – Rückmeldung\n\nAspekte:\n- Bedienbarkeit des Buttons.\n- Zuverlässigkeit der Technik.\n- Wahrgenommener Nutzen.",
+          "labels": ["Pilot"]
+        },
+        {
+          "name": "To-Dos für Pilotphase",
+          "desc": "Kurzfristige Aufgaben vor dem Pilotstart:\n- Technische Stabilisierung (Login, Datenmodell, Frontend-Grundfunktionen).\n- Erstellung einer einfachen Schritt-für-Schritt-Anleitung.\n- Klärung Support-Kontakt (wer hilft bei Problemen?).",
+          "labels": ["Pilot"]
+        },
+        {
+          "name": "Risiken & Blocker",
+          "desc": "Mögliche Risiken im Pilot:\n- WLAN-/Netzprobleme bei Gastgebern.\n- Hardwareausfälle / Batteriethemen.\n- Geringe Rückmeldung oder Nutzung seitens der Gastgeber.\n\nTo-Do:\n- Minimale Fallback-Lösungen überlegen (z.B. manuelle Statusmeldung).\n- Monitoring (Logs, Fehlertracking) prüfen.",
+          "labels": ["Pilot", "Dokumentation"]
+        }
+      ]
+    },
+    {
+      "name": "🧠 Ideen & Backlog",
+      "cards": [
+        {
+          "name": "Optionale Erweiterungen",
+          "desc": "Ideen für zukünftige Ausbaustufen:\n- LED-Verfügbarkeitsanzeige auf einer zentralen Alu-Dibond-Tafel im Ort.\n- Öffentliche Anzeige im Schaukasten / an der Tourist-Information.\n- Mobile App oder Web-App für Gäste mit Live-Status.\n- Schnittstellen zu bestehenden Buchungsplattformen.\n\nDiese Karte dient nur als Ideenspeicher, nicht als kurzfristige To-Do-Liste.",
+          "labels": ["Idee/Vision"]
+        },
+        {
+          "name": "Regionale Skalierung",
+          "desc": "Ideen für die Ausweitung über Schiltach hinaus:\n- Kinzigtal als erster logischer Schritt.\n- Langfristig: Schwarzwald-Gebiete und andere Regionen in BW.\n\nTo-Do (später):\n- Anforderungen anderer TI/Regionen erfragen.\n- Skalierung der Architektur prüfen (Performance, Mandantenfähigkeit).",
+          "labels": ["Idee/Vision"]
+        }
+      ]
+    },
+    {
+      "name": "🛠 To-Do",
+      "cards": [
+        {
+          "name": "Login-Button reagiert nicht",
+          "desc": "Fehlerbeschreibung:\n- Der Login-Button im Frontend reagiert nicht sichtbar, obwohl Benutzername/Passwort eingegeben sind.\n\nZiel:\n- Login-Button soll Request auslösen, bei Erfolg weiterleiten und bei Fehlern eine klare Meldung anzeigen.\n\nAufgaben:\n- Event-Handler für den Button prüfen.\n- Browser-Konsole auf Fehler prüfen.\n- Netzwerk-Tab: Wird ein Request gesendet?\n- Falls kein Request: Event-Binding reparieren.\n- Falls Request erfolgt: Backend-Response & Fehlerhandling prüfen.",
+          "labels": ["Bug", "Technik"]
+        },
+        {
+          "name": "Datenmodell finalisieren",
+          "desc": "Ziel:\n- Sauberes, dokumentiertes Datenmodell für Gastgeber, Buttons und Statusmeldungen.\n\nAufgaben:\n- Tabellen/Felder für Gastgeber definieren.\n- Button-Modell (ID, Status, letzte Meldung, Zuordnung Gastgeber).\n- Optionale Historie definieren.\n- Beziehungen und Foreign Keys prüfen.\n- Dokumentation ins Trello unter „Dokumentation – Technik“ übernehmen.",
+          "labels": ["Technik", "Dokumentation"]
+        },
+        {
+          "name": "Frontend-Menü: Funktionen definieren",
+          "desc": "Ziel:\n- Klare Definition, was jeder Menüpunkt kann und welche Daten angezeigt werden.\n\nAufgaben:\n- Menüpunkte festlegen (Dashboard, Gastgeber, Buttons, Einstellungen, etc.).\n- Rollenrechte (Admin, Gastgeber, Kommune) definieren.\n- Für jeden Menüpunkt: Welche API-Calls, welche Aktionen?",
+          "labels": ["Technik", "Dokumentation"]
+        }
+      ]
+    },
+    {
+      "name": "🏗 In Bearbeitung",
+      "cards": []
+    },
+    {
+      "name": "✔ Fertig",
+      "cards": [
+        {
+          "name": "Backend-Prototyp lauffähig",
+          "desc": "FastAPI-Backend wurde lokal und testweise bei einem Hoster deployt.\n- Grundkonfiguration läuft.\n- API ist erreichbar.\n\nStatus: Fertig (Stand: 08.12.2025).",
+          "labels": ["Technik", "Dokumentation"]
+        }
+      ]
+    },
+    {
+      "name": "🧊 Parken / Blockiert",
+      "cards": [
+        {
+          "name": "Externe Finanzierung / Business Angel",
+          "desc": "Thema ist grundsätzlich interessant, aber aktuell noch nicht konkretisiert.\n\nParken, bis:\n- Prototyp stabil läuft.\n- Pilot erste Ergebnisse liefert.",
+          "labels": ["Business/Finanzen"]
+        }
+      ]
+    }
+  ]
+}

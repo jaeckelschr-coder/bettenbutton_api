@@ -1,0 +1,138 @@
+{
+  "name": "Betten-Button Projekt",
+  "desc": "Zentrales Projektboard für Technik, Business, Pilotierung und Dokumentation.",
+  "labels": [
+    {"name": "Technik", "color": "blue"},
+    {"name": "Business/Finanzen", "color": "green"},
+    {"name": "Pilot", "color": "yellow"},
+    {"name": "Bug", "color": "red"},
+    {"name": "Dokumentation", "color": "purple"},
+    {"name": "Idee/Vision", "color": "black"}
+  ],
+  "lists": [
+    {
+      "name": "🔍 Projektübersicht",
+      "cards": [
+        {
+          "name": "Ziele & Nutzen",
+          "desc": "• Problemdefinition\n• Ziele\n• Nutzen für Gastgeber\n• Nutzen für Kommunen\n• Vision 2025–2027"
+        },
+        {
+          "name": "Projektstatus (Ampel)",
+          "desc": "Status: 🟡 GELB\nLetztes Update: Bitte ergänzen\nKommentar: Übersicht über Gesamtfortschritt"
+        },
+        {
+          "name": "Stakeholder & Beteiligte",
+          "desc": "• Gastgeber\n• Kommunen\n• Technische Partner\n• Förderstellen\n• Business Angels"
+        },
+        {
+          "name": "Entscheidungsprotokoll",
+          "desc": "Bitte wichtige Projektentscheidungen chronologisch hier eintragen.\n\nFormat:\nDATUM – ENTSCHEIDUNG – WARUM – KONSEQUENZEN"
+        }
+      ]
+    },
+    {
+      "name": "📚 Dokumentation – Technik",
+      "cards": [
+        {
+          "name": "Hardware",
+          "desc": "ESP32, Button, Batterie, Verkabelung, Energiesparen, Wake-up-Mechanik, Erweiterungen."
+        },
+        {
+          "name": "Backend (FastAPI)",
+          "desc": "• Datenmodell\n• Endpunkte\n• Authentifizierung\n• Deployment Render.com\n• Offene Punkte"
+        },
+        {
+          "name": "Frontend",
+          "desc": "• Login\n• Dashboard\n• Menüfunktionen\n• Offene Bugs\n• UX-Anpassungen"
+        },
+        {
+          "name": "Technische Aufgaben – nächste Iteration",
+          "desc": "Hier Dokumentation zu kommenden technischen Tasks sammeln."
+        }
+      ]
+    },
+    {
+      "name": "💼 Dokumentation – Business & Strategie",
+      "cards": [
+        {
+          "name": "Preismodell",
+          "desc": "• Fixpreis für Gastgeber\n• Abo-Modell für Kommunen\n• Staffelpreise (10/20/40/75/100 Geräte)\n• Kalkulation\n• Argumente"
+        },
+        {
+          "name": "Fördermöglichkeiten",
+          "desc": "• TIP\n• Naturpark\n• LEADER\n• Digitalisierungsprogramme BW\nBitte Zuständigkeiten und Deadlines ergänzen."
+        },
+        {
+          "name": "Positionierung & Pitch",
+          "desc": "• Nutzenargumente\n• Zielgruppen\n• Marktpositionierung\n• Pitch-Folien-Konzept"
+        }
+      ]
+    },
+    {
+      "name": "🧪 Pilotprojekt Schiltach",
+      "cards": [
+        {
+          "name": "Technischer Pilot – Ablauf",
+          "desc": "• Testgeräte\n• Einbau bei Gastgebern\n• Datenfluss\n• Schnittstellen\n• Monitoring"
+        },
+        {
+          "name": "Rückmeldungen Gastgeber",
+          "desc": "Bitte Feedback hier eintragen."
+        },
+        {
+          "name": "To-Dos für Pilotphase",
+          "desc": "• Hardware-Handover\n• Quickstart-Anleitung\n• Hotline/Supportprozess\n• Evaluation"
+        },
+        {
+          "name": "Risiken & Blocker",
+          "desc": "• Hardwareausfälle\n• WLAN / Netzprobleme\n• Bedienfehler\n• fehlende Rückmeldungen"
+        }
+      ]
+    },
+    {
+      "name": "🧠 Ideen & Backlog",
+      "cards": [
+        {
+          "name": "Optionale Erweiterungen",
+          "desc": "• Mobile App\n• QR-Code-Funktion\n• Exporte für Gemeinden\n• LED-Verfügbarkeitsanzeige"
+        },
+        {
+          "name": "Regionale Skalierung",
+          "desc": "• Kinzigtal\n• Schwarzwald\n• Baden-Württemberg\n• Partner-Regionen"
+        }
+      ]
+    },
+    {
+      "name": "🛠 To-Do",
+      "cards": [
+        {
+          "name": "Login-Button reagiert nicht",
+          "desc": "Fehlerbeschreibung hier ergänzen.\nLabel: Bug",
+          "labels": ["Bug"]
+        },
+        {
+          "name": "Datenmodell prüfen und finalisieren",
+          "desc": "Backend-Modelle validieren."
+        }
+      ]
+    },
+    {
+      "name": "🏗 In Bearbeitung",
+      "cards": []
+    },
+    {
+      "name": "✔ Fertig",
+      "cards": []
+    },
+    {
+      "name": "🧊 Parken / Blockiert",
+      "cards": [
+        {
+          "name": "Externe Finanzierung",
+          "desc": "Warten auf Gespräche / Priorisierungsrunde."
+        }
+      ]
+    }
+  ]
+}

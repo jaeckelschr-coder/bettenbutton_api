@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Betten-Button – TI Verwaltung</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            margin-bottom: 0.2rem;
+        }
+        .subtitle {
+            color: #555;
+            margin-bottom: 1rem;
+        }
+        .toolbar {
+            margin-bottom: 1rem;
+        }
+        select {
+            padding: 4px 8px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px 10px;
+        }
+        th {
+            background: #eee;
+            text-align: left;
+        }
+        button {
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid #888;
+            cursor: pointer;
+        }
+        button.block {
+            background: #ffdddd;
+        }
+        button.allow {
+            background: #ddffdd;
+        }
+        .status {
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+<h1>Betten-Button – TI Verwaltung (NEU)</h1>
+<div class="subtitle" id="subtitle">Client: –</div>
+
+<div class="toolbar">
+    <label for="client-select">Touristinfo auswählen: </label>
+    <select id="client-select"></select>
+</div>
+
+<div class="status" id="status"></div>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Ort</th>
+        <th>Status</th>
+        <th>Aktion</th>
+    </tr>
+    </thead>
+    <tbody id="prop-body">
+    </tbody>
+</table>
+
+<script>
+    let CURRENT_CLIENT_ID = null;
+    let clients = [];
+
+    async function loadClients() {
+        const statusEl = document.getElementById("status");
+        const selectEl = document.getElementById("client-select");
+        const subtitleEl = document.getElementById("subtitle");
+
+        statusEl.textContent = "Lade Clients...";
+        selectEl.innerHTML = "";
+
+        try {
+            const res = await fetch("/clients");
+            if (!res.ok) {
+                statusEl.textContent = "Fehler beim Laden der Clients.";
+                return;
+            }
+            clients = await res.json();
+
+            if (clients.length === 0) {
+                statusEl.textContent = "Keine Clients vorhanden.";
+                subtitleEl.textContent = "Client: –";
+                return;
+            }
+
+            // Dropdown füllen
+            clients.forEach(c => {
+                const opt = document.createElement("option");
+                opt.value = c.id;
+                opt.textContent = c.name;
+                selectEl.appendChild(opt);
+            });
+
+            // Standard: erster Client
+            CURRENT_CLIENT_ID = clients[0].id;
+            updateSubtitle();
+
+            selectEl.value = CURRENT_CLIENT_ID;
+            selectEl.onchange = () => {
+                CURRENT_CLIENT_ID = Number(selectEl.value);
+                updateSubtitle();
+                loadProperties();
+            };
+
+            statusEl.textContent = "";
+            await loadProperties();
+        } catch (err) {
+            console.error(err);
+            statusEl.textContent = "Fehler beim Laden der Clients (Konsole prüfen).";
+        }
+    }
+
+    function updateSubtitle() {
+        const subtitleEl = document.getElementById("subtitle");
+        const client = clients.find(c => c.id === CURRENT_CLIENT_ID);
+        if (client) {
+            subtitleEl.textContent = `Client: ${client.name} (ID ${client.id})`;
+        } else {
+            subtitleEl.textContent = "Client: –";
+        }
+    }
+
+    async function loadProperties() {
+        if (!CURRENT_CLIENT_ID) return;
+
+        const statusEl = document.getElementById("status");
+        const tbody = document.getElementById("prop-body");
+        statusEl.textContent = "Lade Objekte...";
+        tbody.innerinnerHTML = "";
+
+        try {
+            const [allRes, allowedRes] = await Promise.all([
+                fetch("/properties"),
+                fetch(`/clients/${CURRENT_CLIENT_ID}/properties/allowed`)
+            ]);
+
+            if (!allRes.ok || !allowedRes.ok) {
+                statusEl.textContent = "Fehler beim Laden der Daten.";
+                return;
+            }
+
+            const allProps = await allRes.json();
+            const allowedProps = await allowedRes.json();
+
+            const allowedIds = new Set(allowedProps.map(p => p.id));
+
+            statusEl.textContent = `Gesamt: ${allProps.length} Objekte, erlaubt: ${allowedProps.length}`;
+
+            tbody.innerHTML = ""; // Tabelle leeren
+
+            allProps.forEach(p => {
+                const isAllowed = allowedIds.has(p.id);
+
+                const tr = document.createElement("tr");
+
+                const tdId = document.createElement("td");
+                tdId.textContent = p.id;
+
+                const tdName = document.createElement("td");
+                tdName.textContent = p.name;
+
+                const tdCity = document.createElement("td");
+                tdCity.textContent = `${p.postal_code} ${p.city}`;
+
+                const tdStatus = document.createElement("td");
+                tdStatus.textContent = isAllowed ? "erlaubt" : "gesperrt";
+
+                const tdAction = document.createElement("td");
+                const btn = document.createElement("button");
+
+                if (isAllowed) {
+                    btn.textContent = "Sperren";
+                    btn.classList.add("block");
+                } else {
+                    btn.textContent = "Freigeben";
+                    btn.classList.add("allow");
+                }
+
+                btn.onclick = () => togglePermission(p.id, !isAllowed);
+
+                tdAction.appendChild(btn);
+
+                tr.appendChild(tdId);
+                tr.appendChild(tdName);
+                tr.appendChild(tdCity);
+                tr.appendChild(tdStatus);
+                tr.appendChild(tdAction);
+
+                tbody.appendChild(tr);
+            });
+
+        } catch (err) {
+            console.error(err);
+            statusEl.textContent = "Fehler beim Laden der Objekte.";
+        }
+    }
+
+    async function togglePermission(propertyId, allowed) {
+        if (!CURRENT_CLIENT_ID) return;
+
+        const statusEl = document.getElementById("status");
+        statusEl.textContent = "Änderung wird gespeichert...";
+
+        try {
+            const res = await fetch(`/clients/${CURRENT_CLIENT_ID}/properties/${propertyId}/toggle-permission`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ allowed })
+            });
+
+            if (!res.ok) {
+                statusEl.textContent = "Fehler beim Speichern der Änderung.";
+                return;
+            }
+
+            const result = await res.json();
+            statusEl.textContent = `Objekt ${result.property_id} ist jetzt ${result.allowed ? "erlaubt" : "gesperrt"}.`;
+
+            await loadProperties();
+        } catch (err) {
+            console.error(err);
+            statusEl.textContent = "Fehler beim Speichern (Konsole prüfen).";
+        }
+    }
+
+    loadClients();
+</script>
+
+</body>
+</html>
