@@ -1,3 +1,6 @@
+APP_NAME = "Betten-Button API"
+APP_VERSION = "0.9.0-2025-12-17"
+
 # ================================================================
 # Bettenbutton – main.py (Swagger/Schemas wieder sauber)
 # ================================================================
@@ -14,7 +17,7 @@ from database import Base, engine, SessionLocal
 import models
 import schemas
 
-print("### MAIN.PY LOADED – SCHEMAS + SWAGGER CLEAN ###")
+print(f"### {APP_NAME} LOADED – VERSION {APP_VERSION} ###")
 
 # ================================================================
 # INITIAL SETUP
