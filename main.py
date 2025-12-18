@@ -3,12 +3,13 @@ APP_VERSION = "0.9.0-2025-12-17"
 
 # ================================================================
 # Bettenbutton – main.py (Swagger/Schemas wieder sauber)
+# + Dashboard Route /dashboard
 # ================================================================
 
 from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from typing import Optional, List
 from datetime import datetime
 import os
@@ -25,7 +26,7 @@ print(f"### {APP_NAME} LOADED – VERSION {APP_VERSION} ###")
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Bettenbutton API", version="1.0.0")
+app = FastAPI(title=APP_NAME, version=APP_VERSION)
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,7 +37,23 @@ app.add_middleware(
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+# Static Files (Dashboard etc.)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+# ================================================================
+# FRONTEND ROOT + DASHBOARD
+# ================================================================
+
+@app.get("/", include_in_schema=False, response_class=HTMLResponse)
+def root():
+    return HTMLResponse("<h1>Bettenbutton Backend läuft</h1>")
+
+@app.get("/dashboard", include_in_schema=False)
+def dashboard():
+    # statisches Dashboard (Polling via GET /devices)
+    return FileResponse(os.path.join(STATIC_DIR, "dashboard.html"))
 
 
 # ================================================================
@@ -81,9 +98,8 @@ def next_status(current: int) -> int:
     # 0 (rot) -> 1 (heute) -> 2 (mehrere Tage) -> 0
     return (int(current) + 1) % 3
 
-
 def to_dashboard_device(d: models.Device) -> schemas.DeviceDashboardRead:
-    # Wir bauen explizit das Dashboard-kompatible Objekt inkl. Dopplung der Felder
+    # Dashboard-kompatibles Objekt inkl. Dopplung der Felder
     return schemas.DeviceDashboardRead(
         id=d.id,
         name=d.name,
@@ -95,15 +111,6 @@ def to_dashboard_device(d: models.Device) -> schemas.DeviceDashboardRead:
         status=d.current_status,
         lastUpdate=d.last_update
     )
-
-
-# ================================================================
-# FRONTEND ROOT
-# ================================================================
-
-@app.get("/", include_in_schema=False, response_class=HTMLResponse)
-def root():
-    return HTMLResponse("<h1>Bettenbutton Backend läuft</h1>")
 
 
 # ================================================================
@@ -131,7 +138,6 @@ def create_device(payload: schemas.DeviceCreate, db=Depends(get_db)):
     db.commit()
     db.refresh(dev)
     return dev
-
 
 @app.get("/devices", response_model=List[schemas.DeviceDashboardRead])
 def list_devices(db=Depends(get_db)):
