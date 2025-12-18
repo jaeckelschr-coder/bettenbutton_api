@@ -1,135 +1,129 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Betten-Button Dashboard</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f6f7f8;
-            padding: 20px;
-            margin: 0;
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 25px;
-            color: #333;
-        }
-
-        #device-list {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .device {
-            background: #fff;
-            padding: 15px 18px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .info {
-            max-width: 70%;
-        }
-
-        .info b {
-            font-size: 18px;
-        }
-
-        .status-indicator {
-            display: flex;
-            gap: 8px;
-        }
-
-        .led {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: #ccc;
-            border: 1px solid #888;
-        }
-
-        .led.red.on { background: #e74c3c; }
-        .led.green.on { background: #2ecc71; }
-
-        .updated {
-            font-size: 12px;
-            color: #666;
-            margin-top: 4px;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Betten-Button Dashboard</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:24px}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .card{border:1px solid #ddd;border-radius:14px;padding:14px;min-width:280px}
+    .pill{padding:6px 10px;border-radius:999px;border:1px solid #ddd;display:inline-block}
+    .ok{border-color:#9ad09a}
+    .bad{border-color:#e5a0a0}
+    .muted{color:#666}
+    .big{font-size:28px;font-weight:700}
+    .btn{cursor:pointer;border:1px solid #ddd;border-radius:10px;padding:10px 12px;background:#fff}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+    code{background:#f6f6f6;padding:2px 6px;border-radius:6px}
+  </style>
 </head>
-
 <body>
-    <h1>🏨 Betten-Button Dashboard</h1>
+  <div class="row" style="justify-content:space-between">
+    <div>
+      <div class="big">Betten-Button Dashboard</div>
+      <div class="muted">Live-Status via <code>GET /devices</code> (Polling)</div>
+    </div>
+    <div class="row">
+      <span id="health" class="pill">API: …</span>
+      <button class="btn" onclick="refreshNow()">Jetzt aktualisieren</button>
+    </div>
+  </div>
 
-    <div id="device-list">Lade Geräte...</div>
+  <hr style="margin:16px 0;border:none;border-top:1px solid #eee" />
 
-    <script>
-        async function loadAndRender() {
-            try {
-                const res = await fetch("/devices");
-                if (!res.ok) {
-                    throw new Error("HTTP " + res.status);
-                }
-                const devices = await res.json();
+  <div class="row">
+    <span class="pill">Polling: <b id="pollMs">1000</b> ms</span>
+    <button class="btn" onclick="setPoll(500)">0,5s</button>
+    <button class="btn" onclick="setPoll(1000)">1s</button>
+    <button class="btn" onclick="setPoll(2000)">2s</button>
+    <span class="pill">Letztes Update: <b id="lastFetch">—</b></span>
+  </div>
 
-                // Sortierung: freie Betriebe (1 und 2) zuerst, dann rote (0)
-                devices.sort((a, b) => b.status - a.status);
+  <div style="margin:14px 0" class="grid" id="cards"></div>
 
-                const container = document.getElementById("device-list");
-                container.innerHTML = "";
+  <script>
+    const API_BASE = ""; // leer = gleiche Domain (Render)
+    let POLL_MS = 1000;
+    let timer = null;
 
-                devices.forEach(dev => {
-                    const div = document.createElement("div");
-                    div.className = "device";
+    function statusLabel(s){
+      if (s === 0) return "0 · Rot (keine Verfügbarkeit)";
+      if (s === 1) return "1 · Grün 1 (heute verfügbar)";
+      if (s === 2) return "2 · Grün 1+2 (mehrere Tage)";
+      return String(s);
+    }
 
-                    // LED-Zustände bestimmen
-                    const redOn = dev.status === 0;
-                    const g1On = dev.status === 1 || dev.status === 2;
-                    const g2On = dev.status === 2;
+    function fmtTime(iso){
+      if(!iso) return "—";
+      try {
+        const d = new Date(iso);
+        return d.toLocaleString("de-DE");
+      } catch(e){ return iso; }
+    }
 
-                    const lastUpdate = dev.lastUpdate
-                        ? new Date(dev.lastUpdate).toLocaleString("de-DE")
-                        : "unbekannt";
+    function render(devices){
+      const root = document.getElementById("cards");
+      root.innerHTML = "";
+      if(!Array.isArray(devices) || devices.length===0){
+        root.innerHTML = `<div class="card"><b>Keine Geräte gefunden</b><div class="muted">Antwort war leer.</div></div>`;
+        return;
+      }
 
-                    div.innerHTML = `
-                        <div class="info">
-                            <b>${dev.name}</b><br>
-                            Tel: ${dev.phone || "–"}<br>
-                            Mail: ${dev.email || "–"}
-                            <div class="updated">Aktualisiert: ${lastUpdate}</div>
-                        </div>
+      for(const d of devices){
+        const s = d.status;
+        const pillClass = (s===0) ? "bad" : "ok";
+        const last = d.lastUpdate || d.timestamp || d.last_update || d.updated_at;
+        const source = d.source || "—";
+        root.insertAdjacentHTML("beforeend", `
+          <div class="card">
+            <div class="row" style="justify-content:space-between">
+              <div><b>${d.device_id || d.id || "unknown"}</b></div>
+              <span class="pill ${pillClass}">Status: <b>${statusLabel(s)}</b></span>
+            </div>
+            <div class="muted" style="margin-top:10px">
+              Last update: <b>${fmtTime(last)}</b><br/>
+              Source: <b>${source}</b>
+            </div>
+          </div>
+        `);
+      }
+    }
 
-                        <div class="status-indicator">
-                            <div class="led red ${redOn ? "on" : ""}"></div>
-                            <div class="led green ${g1On ? "on" : ""}"></div>
-                            <div class="led green ${g2On ? "on" : ""}"></div>
-                        </div>
-                    `;
-
-                    container.appendChild(div);
-                });
-
-            } catch (err) {
-                console.error("Fehler beim Laden:", err);
-                document.getElementById("device-list").innerHTML =
-                    "<b>Fehler beim Laden der Daten.</b>";
-            }
+    async function fetchDevices(){
+      const health = document.getElementById("health");
+      try{
+        const res = await fetch(API_BASE + "/devices", { cache: "no-store" });
+        if(!res.ok){
+          health.textContent = `API: ${res.status}`;
+          health.className = "pill bad";
+          render([]);
+          return;
         }
+        const data = await res.json();
+        health.textContent = "API: OK";
+        health.className = "pill ok";
 
-        // Initialer Load
-        loadAndRender();
+        document.getElementById("lastFetch").textContent = new Date().toLocaleTimeString("de-DE");
+        render(data);
+      }catch(e){
+        health.textContent = "API: offline";
+        health.className = "pill bad";
+      }
+    }
 
-        // Alle 10 Sekunden aktualisieren
-        setInterval(loadAndRender, 10000);
-    </script>
+    function setPoll(ms){
+      POLL_MS = ms;
+      document.getElementById("pollMs").textContent = String(ms);
+      if(timer) clearInterval(timer);
+      timer = setInterval(fetchDevices, POLL_MS);
+      fetchDevices();
+    }
+
+    function refreshNow(){ fetchDevices(); }
+
+    setPoll(POLL_MS);
+  </script>
 </body>
 </html>
+
