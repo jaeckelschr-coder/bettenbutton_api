@@ -14,6 +14,11 @@ engine = create_engine(
     connect_args={"check_same_thread": False},
 )
 
+print("### DB_PATH =", DB_PATH)
+print("### DB_URL  =", SQLALCHEMY_DATABASE_URL)
+print("### DB_DIR_EXISTS =", os.path.isdir(os.path.dirname(DB_PATH)))
+print("### DB_FILE_EXISTS =", os.path.isfile(DB_PATH))
+
 # SQLite stabiler machen (wichtig bei Polling/Dashboard)
 @event.listens_for(engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -25,3 +30,4 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
